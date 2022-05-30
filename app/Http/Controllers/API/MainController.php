@@ -679,16 +679,8 @@ class MainController extends Controller
         }
     }
 
-    public function fetch_bookings(MainRequest $request, $inner_call = FALSE)
+     public function fetch_bookings(MainRequest $request, $inner_call = FALSE)
     {
-
-        $record              = People::where('id', $request->people_id)->first();
-
-        if(((ucfirst(strtolower($request->role)))) == "Passenger"){
-            $rec['role'] = 0;
-            $record->update($rec);
-        }
-
         $bookings           = Booking::where('bookings.active',1)
                                 ->where('bookings.passenger_id',$request->people_id)
                                 ->where('bookings.status_id','<=',3)
@@ -728,7 +720,6 @@ class MainController extends Controller
                             'bookings' => $bookings
                     ];
         }
-
 
         return Response::json([
                                 'status'        => "success",
@@ -1018,9 +1009,7 @@ class MainController extends Controller
                             ->select(
                                         'province_id',
                                         'id as city_id',
-                                        'name as city_name',
-                                        'lat as latitude',
-                                        'lng as longitude'
+                                        'name as city_name'
                                     )
                             ->where('active',1)
                             ->get();

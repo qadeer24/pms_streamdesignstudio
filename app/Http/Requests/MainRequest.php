@@ -46,7 +46,7 @@ class MainRequest extends FormRequest
         }else if((isset($this->action)) && (($this->action) == "verify_otp") ){
             $con    =   [
                             'otp'           => 'required|digits:4|numeric',
-                            'temp_code'     => 'required|digits:10|numeric'
+                            'temp_code'     => 'required|numeric'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "forgot") ){
@@ -79,12 +79,12 @@ class MainRequest extends FormRequest
                             'pickup_city_id'    => 'required|numeric',
                             'pickup_lat'        => 'required|numeric',
                             'pickup_lng'        => 'required|numeric',
-                            'pickup_address'    => 'required|min:3',
+                            // 'pickup_address'    => 'required|min:3',
 
                             'dropoff_city_id'   => 'required|numeric',
                             'dropoff_lat'       => 'required|numeric',
                             'dropoff_lng'       => 'required|numeric',
-                            'dropoff_address'   => 'required|min:3',
+                            // 'dropoff_address'   => 'required|min:3',
 
                             'schedule_date'     => 'required|date',
                             'schedule_time'     => 'required|date_format:H:i',
