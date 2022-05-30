@@ -15,6 +15,7 @@ class MainRequest extends FormRequest
             $con    =   [
                 'fname'         => 'required|min:3|regex:/^([^0-9]*)$/',
                 'email'         => 'email|unique:people,email,NULL,id,verified,1',
+                'cnic'          => 'required|digits:13|numeric|unique:people,cnic',
                 'password'      => 'required|min:8',
                 'contact_no'    => 'required|digits:11|numeric|unique:people,contact_no,NULL,id,verified,1'
             ];
@@ -26,21 +27,20 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_details") ){
             $con    =   [
-                            'contact_no'    => 'required|digits:11|numeric',
-
-                            'cnic'          => 'required|digits:13|numeric|unique:people_details,cnic',
-                            'address'       => 'required|min:3',
-                            'license_no'    => 'required|min:3',
-                            'age'           => 'required|numeric',
-                            'dob'           => 'required|date',
-                            'expire_date'   => 'required|date|after:dob',
+                            'cnic'                    => 'required|digits:13|numeric|unique:people_details,cnic',
+                            'address'                 => 'required|min:3',
+                            'license_no'              => 'required|min:3',
+                            'age'                     => 'required|numeric',
+                            'dob'                     => 'required|date',
+                            'expire_date'             => 'required|date|after:dob',
                             
-                            'vehicle_no'    => 'required',
-                            'manufacturer'  => 'required|min:3|regex:/^([^0-9]*)$/',
-                            'modal'         => 'required',
-                            'color'         => 'required',
-                            'seat'          => 'required|numeric',
-                            'tax_pic'       => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+                            'vehicle_registration'    => 'required',
+                            'car_year'                => 'required',
+                            'make'                    => 'required|min:3|regex:/^([^0-9]*)$/',
+                            'modal'                   => 'required',
+                            'color'                   => 'required',
+                            'seat'                    => 'required|numeric',
+                            'tax_pic'                 => 'image|mimes:jpeg,png,jpg,gif|max:2048',
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "verify_otp") ){
@@ -152,6 +152,8 @@ class MainRequest extends FormRequest
                             'schedule_date'     => 'required|date',
                             'start_time'        => 'required|date_format:H',
                             'end_time'          => 'required|date_format:H',
+                            'start_date'        => 'required|date_format:Y-m-d',
+                            'end_date'          => 'required|date_format:Y-m-d',
                         ];
             return $con; 
         }else{
@@ -171,7 +173,7 @@ class MainRequest extends FormRequest
     public function messages()
     {
         return [
-            'fname.required'        => 'full name is required',
+            'fname.required'        => 'Full name is required',
             'fname.min'             => 'Full name must be 3 character long!',
             'fname.regex'           => 'Full name must not have special characters!',
 

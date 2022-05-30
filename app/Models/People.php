@@ -20,6 +20,7 @@ class People extends Authenticatable
         'fname',
         'password',
         'contact_no',
+        'cnic',
         'verified',
         'active',
         'forgot',

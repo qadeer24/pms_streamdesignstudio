@@ -20,6 +20,7 @@ class CreatePeopleTable extends Migration
             $table->string('fname');  //fullname
             $table->string('password');
             $table->string('contact_no',15)->unique()->nullable();
+            $table->string('cnic',15)->unique()->nullable();
             $table->boolean('verified')->default(0)->comment('0 = non-verified and 1 = verified'); 
             $table->boolean('active')->default(1)->comment('0 = inactive and 1 = active'); 
             $table->boolean('forgot')->nullable()->comment('null = not forgot and 1 = forgot'); 

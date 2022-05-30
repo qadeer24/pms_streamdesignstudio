@@ -5,6 +5,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\CaptainController;
 use App\Http\Controllers\API\MainController;
+use App\Http\Controllers\API\PassengerController;
 
 use App\Events\Message;
 
@@ -21,7 +22,7 @@ use App\Events\Message;
     // });
 // Route::group(['prefix' => 'captain'], function () {
     Route::post("login",[MainController::class, 'login']);
-    Route::post("register",[MainController::class, 'register']);
+    Route::post("register",[MainController::class, 'register'])->name('register');
     Route::post("verify_otp",[MainController::class, 'verify_otp']);
     
     Route::post("forgot",[MainController::class, 'forgot']);

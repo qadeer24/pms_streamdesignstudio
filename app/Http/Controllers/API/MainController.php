@@ -26,7 +26,8 @@ class MainController extends Controller
 {
     function login(MainRequest $request)
     {
-        $record     = People::where('contact_no', $request->contact_no)->first();
+        $record             = People::where('contact_no', $request->contact_no)->first();
+        $record_details     = People_detail::where('people_id', $record->id)->first();
         // is user exist
         if(empty($record)){
             return Response::json([
@@ -78,8 +79,8 @@ class MainController extends Controller
 
         // create new token for this ID
         $token   = $record->createToken('people-token')->plainTextToken;
-        $type    = (((($record->type) =="Captain") || (($record->type) ==1))? "Captain" : "Passenger" ) ;
-        $role    = (((($record->role) =="Captain") || (($record->role) ==1))? "Captain" : "Passenger" ) ;
+        $type    = (((($record->type) =="Captain") || (($record->type) ==1))? "Captain" : "Passenger" );
+        $role    = (((($record->role) =="Captain") || (($record->role) ==1))? "Captain" : "Passenger" );
 
 
         $request->people_id=    $record->id;
@@ -90,16 +91,23 @@ class MainController extends Controller
         }
 
         // dd($records);
+        $bool = "";
+        if (!empty($record_details)) {
+            $bool = true;
+        }else{
+            $bool = false;
+        }
         return Response::json([
                                 'status'        => "success",
                                 'msg'           => "Logged in successfully",
                                 'data'          =>  [
-                                                        'token'         => $token,
-                                                        'fname'         => $record->fname,
-                                                        'people_id'     => $record->id,
-                                                        'type'          => $type,
-                                                        'role'          => $role, // toggle role in app
-                                                        'records'       => $records
+                                                        'token'                 => $token,
+                                                        'fname'                 => $record->fname,
+                                                        'people_id'             => $record->id,
+                                                        'type'                  => $type,
+                                                        'role'                  => $role, // toggle role in app
+                                                        'records'               => $records,
+                                                        'registration_complete' => $bool
                                                     ]
                                
                             ], 200);
@@ -245,7 +253,7 @@ class MainController extends Controller
     public function register(MainRequest $request)
     {
         $otp                 = rand(1000, 9999);
-        $temp_code           = rand(1000000000, 9999999999);
+        $temp_code           = rand(100000000, 999999999);
         $record              = People::where('contact_no', $request->contact_no)->first();
 
         if ( empty($record)){
@@ -253,6 +261,7 @@ class MainController extends Controller
             $input['otp']        = $otp;
             $input['temp_code']  = $temp_code;
             $input['fname']      = ucwords($input['fname']);
+            $input['cnic']       = $input['cnic'];
             $input['password']   = Hash::make($input['password']);
             $record              = People::create($input);
         }else{
@@ -470,11 +479,11 @@ class MainController extends Controller
     
     public function store_details(MainRequest $request)
     {
-        $record              = People::where('contact_no', $request->contact_no)->first();
+        $record              = People::where('cnic', $request->cnic)->first();
         if ( empty($record) ){
             return Response::json([
                 'status'    => "failed",
-                'msg'       => 'Couldn\'t find your Account',
+                'msg'       => 'CNIC does not match',
                 "data"      => []
             ], 404);
         }
@@ -672,6 +681,14 @@ class MainController extends Controller
 
     public function fetch_bookings(MainRequest $request, $inner_call = FALSE)
     {
+
+        $record              = People::where('id', $request->people_id)->first();
+
+        if(((ucfirst(strtolower($request->role)))) == "Passenger"){
+            $rec['role'] = 0;
+            $record->update($rec);
+        }
+
         $bookings           = Booking::where('bookings.active',1)
                                 ->where('bookings.passenger_id',$request->people_id)
                                 ->where('bookings.status_id','<=',3)
@@ -689,7 +706,7 @@ class MainController extends Controller
                                         'people.fname as cap_name',
 
                                         'people_details.modal',
-                                        'people_details.manufacturer',
+                                        'people_details.make',
 
                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -712,6 +729,7 @@ class MainController extends Controller
                     ];
         }
 
+
         return Response::json([
                                 'status'        => "success",
                                 'msg'           => "Bookings fetched for passenger successfully",
@@ -731,6 +749,13 @@ class MainController extends Controller
 
     public function fetch_schedules(MainRequest $request, $inner_call = FALSE)
     {
+        $record              = People::where('id', $request->people_id)->first();
+
+        if(((ucfirst(strtolower($request->role)))) == "Captain"){
+            $rec['role'] = 1;
+            $record->update($rec);
+        }
+
         $schedules          = Schedule::where('schedules.active',1)
                                 ->where('schedules.captain_id',$request->people_id)
                                 ->where('schedules.status_id','<=',3)
@@ -746,7 +771,7 @@ class MainController extends Controller
                                         'people.fname as cap_name',
 
                                         'people_details.modal',
-                                        'people_details.manufacturer',
+                                        'people_details.make',
 
                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -799,7 +824,7 @@ class MainController extends Controller
                                         'people.fname as cap_name',
 
                                         'people_details.modal',
-                                        'people_details.manufacturer',
+                                        'people_details.make',
 
                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -837,7 +862,7 @@ class MainController extends Controller
                                         'people.fname as cap_name',
 
                                         'people_details.modal',
-                                        'people_details.manufacturer',
+                                        'people_details.make',
 
                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -876,7 +901,7 @@ class MainController extends Controller
                                         'people.fname as cap_name',
 
                                         'people_details.modal',
-                                        'people_details.manufacturer',
+                                        'people_details.make',
 
                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -900,12 +925,14 @@ class MainController extends Controller
     {
         $end_time   = \Carbon\Carbon::createFromFormat('H', $request->end_time);
         $start_time = \Carbon\Carbon::createFromFormat('H', $request->start_time);
+        $start_date = \Carbon\Carbon::createFromFormat('Y-m-d', $request->start_date);
+        $end_date   = \Carbon\Carbon::createFromFormat('Y-m-d', $request->end_date);
 
         $schedules  = Schedule::where('schedules.active',1)
                                 // ->where('schedules.captain_id',$request->people_id)
                                 ->where('schedules.pickup_city_id',$request->pickup_city_id)
                                 ->where('schedules.dropoff_city_id',$request->dropoff_city_id)
-                                ->where('schedules.schedule_date',$request->schedule_date)
+                                ->whereBetween('schedules.schedule_date',[$start_date,$end_date])
                                 ->whereBetween('schedules.schedule_time',[$start_time,$end_time])
                                 ->where('schedules.status_id','<=',3) 
                                 ->leftjoin('people', 'people.id', '=', 'schedules.captain_id')
@@ -919,7 +946,7 @@ class MainController extends Controller
                                         'people.fname as cap_name',
 
                                         'people_details.modal',
-                                        'people_details.manufacturer',
+                                        'people_details.make',
 
                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -991,7 +1018,9 @@ class MainController extends Controller
                             ->select(
                                         'province_id',
                                         'id as city_id',
-                                        'name as city_name'
+                                        'name as city_name',
+                                        'lat as latitude',
+                                        'lng as longitude'
                                     )
                             ->where('active',1)
                             ->get();

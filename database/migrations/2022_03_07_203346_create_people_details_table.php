@@ -18,8 +18,9 @@ class CreatePeopleDetailsTable extends Migration
             $table->string('license_no',10)->nullable();
             $table->string('age',2)->nullable();
             $table->date('expire_date')->nullable();
-            $table->string('vehicle_no',10)->nullable();
-            $table->string('manufacturer',25)->nullable();
+            $table->string('vehicle_registration',10)->nullable();
+            $table->string('car_year',10)->nullable();
+            $table->string('make',25)->nullable();
             $table->string('modal',10)->nullable();
             $table->string('color',10)->nullable();
             $table->unsignedTinyInteger('seat')->nullable();
