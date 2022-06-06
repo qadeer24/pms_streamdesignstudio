@@ -91,6 +91,8 @@ class MainRequest extends FormRequest
 
                             'vacant_seat'       => 'required|numeric|min:1',
                             'fare'              => 'required|numeric|min:1',
+
+                            'show_contact'      => 'required',
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_booking") ){
@@ -105,7 +107,6 @@ class MainRequest extends FormRequest
             $con    =   [
                             'people_id'         => 'required|numeric',
                             'booking_id'        => 'required|numeric',
-                            'cancel_reason_id'  => 'required|numeric',
                             'cancel_reason'     => 'regex:/^([^0-9]*)$/'
                         ];
             return $con; 
@@ -113,7 +114,6 @@ class MainRequest extends FormRequest
             $con    =   [
                             'people_id'         => 'required|numeric',
                             'schedule_id'       => 'required|numeric',
-                            'cancel_reason_id'  => 'required|numeric',
                             'cancel_reason'     => 'regex:/^([^0-9]*)$/'
                         ];
             return $con; 
@@ -154,6 +154,9 @@ class MainRequest extends FormRequest
                             'end_time'          => 'required|date_format:H',
                             'start_date'        => 'required|date_format:Y-m-d',
                             'end_date'          => 'required|date_format:Y-m-d',
+                            'ride_start'        => 'required',
+                            'ride_end'          => 'required',
+                            'vacant_seat'       => 'required',
                         ];
             return $con; 
         }else{

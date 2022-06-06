@@ -10,6 +10,8 @@ class Rating extends Model
     protected $dates = ['deleted_at'];
     protected $fillable = [
         'name',
+        'star',
+        'comment',
         'active'
     ];
 

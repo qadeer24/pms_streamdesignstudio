@@ -894,7 +894,7 @@ class MainController extends Controller
                                         'people_details.modal',
                                         'people_details.make',
 
-                                        DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
+                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
                                     )
                                 ->get();
@@ -911,6 +911,7 @@ class MainController extends Controller
                                                 ]
                             ], 200);
     }
+
 
     public function fetch_schedule_by_time(MainRequest $request)
     {
@@ -933,6 +934,11 @@ class MainController extends Controller
                                 ->select(
                                         'schedules.id as schedule_id',
                                         'schedules.fare',
+                                        'schedules.vacant_seat',
+                                        'schedules.schedule_date',
+                                        
+                                        'schedules.ride_',
+                                        'schedules.ride_end',
                                         
                                         'people.fname as cap_name',
 
@@ -943,6 +949,11 @@ class MainController extends Controller
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
                                     )
                                 ->get();
+
+
+
+
+
         
         $schedules          = $this->append_rating($schedules);
         $tot_schedules      = $this->count_schedules($request->people_id);
@@ -976,12 +987,15 @@ class MainController extends Controller
                             ], 200);
     }
 
+
     public function fetch_ratings()
     {
         $ratings      = Rating::orderBy('id')
                             ->select(
                                         'id as rating_id',
-                                        'name as rating_name'
+                                        'name as rating_name',
+                                        'star as rating_star',
+                                        'comment as rating_comment'
                                     )
                             ->where('active',1)
                             ->get();
@@ -1009,7 +1023,9 @@ class MainController extends Controller
                             ->select(
                                         'province_id',
                                         'id as city_id',
-                                        'name as city_name'
+                                        'name as city_name',
+                                        'lat as city_lat',
+                                        'lng as city_lng'
                                     )
                             ->where('active',1)
                             ->get();
@@ -1033,6 +1049,7 @@ class MainController extends Controller
                                                 ]
                             ], 200);
     }
+
 
     public function fetch_cities()
     {
