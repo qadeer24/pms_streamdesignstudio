@@ -35,13 +35,15 @@ class Schedule extends Model
         'cancel_reason',
         
         'status_id',
-
+        
         'show_contact',
-
-        'ride_start',
-
-        'ride_end',
-
+        
+        'start_time',
+        'end_time',
+        
+        'start_date',
+        'end_date',
+        
         'active'
     ];
 
