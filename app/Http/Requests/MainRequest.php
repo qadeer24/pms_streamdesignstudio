@@ -149,13 +149,10 @@ class MainRequest extends FormRequest
             $con    =   [
                             'pickup_city_id'    => 'required|numeric',
                             'dropoff_city_id'   => 'required|numeric',
-                            'schedule_date'     => 'required|date',
                             'start_time'        => 'required|date_format:H',
                             'end_time'          => 'required|date_format:H',
                             'start_date'        => 'required|date_format:Y-m-d',
                             'end_date'          => 'required|date_format:Y-m-d',
-                            'ride_start'        => 'required',
-                            'ride_end'          => 'required',
                         ];
             return $con; 
         }else{
