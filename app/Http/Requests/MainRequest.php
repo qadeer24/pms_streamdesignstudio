@@ -154,9 +154,6 @@ class MainRequest extends FormRequest
                             'end_time'          => 'required|date_format:H',
                             'start_date'        => 'required|date_format:Y-m-d',
                             'end_date'          => 'required|date_format:Y-m-d',
-                            'ride_start'        => 'required',
-                            'ride_end'          => 'required',
-                            'vacant_seat'       => 'required',
                         ];
             return $con; 
         }else{

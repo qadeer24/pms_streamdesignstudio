@@ -937,8 +937,8 @@ class MainController extends Controller
                                         'schedules.vacant_seat',
                                         'schedules.schedule_date',
                                         
-                                        'schedules.ride_',
-                                        'schedules.ride_end',
+                                        'schedules.start_time',
+                                        'schedules.end_time',
                                         
                                         'people.fname as cap_name',
 

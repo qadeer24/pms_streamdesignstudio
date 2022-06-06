@@ -38,9 +38,9 @@ class Schedule extends Model
 
         'show_contact',
 
-        'ride_start',
+        'start_time',
 
-        'ride_end',
+        'end_time',
 
         'active'
     ];
