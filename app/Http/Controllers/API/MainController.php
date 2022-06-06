@@ -737,6 +737,18 @@ class MainController extends Controller
                         ->where('schedules.status_id','<=',3)
                         ->count();
     }
+    
+    
+    
+    public function count_bookings($schedule_id){
+
+        $seats      = Booking::where('bookings.schedule_id',$schedule_id)
+                            ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
+                            ->sum('book_seat');
+                            
+                            return    $seats;
+    }
+
 
     public function fetch_schedules(MainRequest $request, $inner_call = FALSE)
     {
@@ -915,6 +927,7 @@ class MainController extends Controller
 
     public function fetch_schedule_by_time(MainRequest $request)
     {
+        
         $end_time   = \Carbon\Carbon::createFromFormat('H', $request->end_time);
         $start_time = \Carbon\Carbon::createFromFormat('H', $request->start_time);
         $start_date = \Carbon\Carbon::createFromFormat('Y-m-d', $request->start_date);
@@ -939,6 +952,8 @@ class MainController extends Controller
                                         
                                         'schedules.start_time',
                                         'schedules.end_time',
+                                        'schedules.start_date',
+                                        'schedules.end_date',
                                         
                                         'people.fname as cap_name',
 
@@ -950,19 +965,30 @@ class MainController extends Controller
                                     )
                                 ->get();
 
-
-
+    
+        $sh = array();
+        
+            foreach ($schedules as $key => $value) {
+                $schdle_id  = $value->schedule_id;
+                $bkings     = $this->count_bookings($schdle_id);
+                
+        
+                if( ($value->vacant_seat)  > $bkings ){
+                    array_push($sh,$value);
+                }
+                
+            }
 
 
         
-        $schedules          = $this->append_rating($schedules);
+        $schedules          = $this->append_rating($sh);
         $tot_schedules      = $this->count_schedules($request->people_id);
 
         return Response::json([
                                 'status'        => "success",
                                 'msg'           => "Schedules fetched by time successfully",
                                 'data'          => [
-                                                        'schedules' => $schedules,
+                                                        'schedules' => $sh,
                                                         'tot_schedules' => $tot_schedules
                                                 ]
                             ], 200);

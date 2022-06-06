@@ -39,9 +39,18 @@ class CreateSchedulesTable extends Migration
             $table->unsignedTinyInteger('cancel_reason_id')->nullable();
             $table->text('cancel_reason')->nullable();
 
-            $table->boolean('show_contact')->nullable();
-
             $table->unsignedTinyInteger('status_id')->nullable();
+            
+            $table->unsignedTinyInteger('show_contact')->default(0);
+            
+            $table->integer('start_time')->nullable();
+             
+            $table->integer('end_time')->nullable();
+            
+            $table->date('start_date')->nullable();
+              
+            $table->date('end_date')->nullable();
+            
             $table->boolean('active')->default(1);
 
             $table->softDeletes();
