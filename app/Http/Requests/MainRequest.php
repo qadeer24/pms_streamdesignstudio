@@ -152,6 +152,14 @@ class MainRequest extends FormRequest
                             'end_date'          => 'required|date_format:Y-m-d',
                         ];
             return $con; 
+        }
+        else if((isset($this->action)) && (($this->action) == "fetch_ratings") ){
+            $con    =   [
+                            'name'     => 'required',
+                            'star'     => 'required',
+                            'comment'  => 'required'
+                        ];
+            return $con; 
         }else{
             return  ['action' => 'required|min:3|regex:/^([^0-9]*)$/'];
         }
