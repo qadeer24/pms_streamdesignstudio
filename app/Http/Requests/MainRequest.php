@@ -106,14 +106,12 @@ class MainRequest extends FormRequest
         }else if((isset($this->action)) && (($this->action) == "cancel_booking") ){
             $con    =   [
                             'people_id'         => 'required|numeric',
-                            'schedule_id'       => 'required|numeric'
+                            'booking_id'        => 'required|numeric'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "cancel_schedule") ){
             $con    =   [
-                            'people_id'         => 'required|numeric',
-                            'schedule_id'       => 'required|numeric',
-                            'cancel_reason'     => 'regex:/^([^0-9]*)$/'
+                            'people_id'         => 'required|numeric'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_schedules") ){
