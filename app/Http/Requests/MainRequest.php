@@ -106,15 +106,12 @@ class MainRequest extends FormRequest
         }else if((isset($this->action)) && (($this->action) == "cancel_booking") ){
             $con    =   [
                             'people_id'         => 'required|numeric',
-                            'booking_id'        => 'required|numeric',
-                            'cancel_reason'     => 'regex:/^([^0-9]*)$/'
+                            'booking_id'        => 'required|numeric'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "cancel_schedule") ){
             $con    =   [
-                            'people_id'         => 'required|numeric',
-                            'schedule_id'       => 'required|numeric',
-                            'cancel_reason'     => 'regex:/^([^0-9]*)$/'
+                            'people_id'         => 'required|numeric'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_schedules") ){
@@ -154,6 +151,18 @@ class MainRequest extends FormRequest
                             'start_date'        => 'required|date_format:Y-m-d',
                             'end_date'          => 'required|date_format:Y-m-d',
                         ];
+            return $con; 
+        }
+        else if((isset($this->action)) && (($this->action) == "fetch_ratings") ){
+            $con    =   [
+                            'name'     => 'required',
+                            'star'     => 'required',
+                            'comment'  => 'required'
+                        ];
+            return $con; 
+        }
+        else if((isset($this->action)) && (($this->action) == "update_profile") ){
+            $con    =   [ 'contact_no'    => 'required|digits:11|numeric' ];
             return $con; 
         }else{
             return  ['action' => 'required|min:3|regex:/^([^0-9]*)$/'];

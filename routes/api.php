@@ -56,6 +56,7 @@ use App\Events\Message;
         Route::post("fetch_cancel_reasons",[MainController::class, 'fetch_cancel_reasons']);
         Route::post("fetch_provinces",[MainController::class, 'fetch_provinces']);
         Route::post("fetch_ratings",[MainController::class, 'fetch_ratings']);
+        Route::post("change_password",[MainController::class, 'change_password']);
 
     
         // Route::get("chart/{captain_id}",[CaptainController::class, 'charts']);
