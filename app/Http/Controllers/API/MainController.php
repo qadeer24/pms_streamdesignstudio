@@ -966,18 +966,18 @@ class MainController extends Controller
                                 ->get();
 
     
-        $sh = array();
-        
-            foreach ($schedules as $key => $value) {
-                $schdle_id  = $value->schedule_id;
-                $bkings     = $this->count_bookings($schdle_id);
+                $sh = array();
                 
-        
-                if( ($value->vacant_seat)  > $bkings ){
-                    array_push($sh,$value);
-                }
+                    foreach ($schedules as $key => $value) {
+                        $schdle_id  = $value->schedule_id;
+                        $bkings     = $this->count_bookings($schdle_id);
+                        
                 
-            }
+                        if( ($value->vacant_seat)  > $bkings ){
+                            array_push($sh,$value);
+                        }
+                        
+                    }
 
 
         
@@ -1088,6 +1088,49 @@ class MainController extends Controller
                                                 ]
                             ], 200);
     }
+    
+    
+    public function update_profile(MainRequest $request)
+    {
+        $record             = People::where('contact_no', $request->contact_no)->first();
+        $record_details     = People_detail::where('people_id', $record->id)->first();
+        
+        
+        // is user exist
+        if(empty($record)){
+            return Response::json([
+                                    'status'    => "failed",
+                                    'msg'       => 'Couldn\'t find your Account.',
+                                    "data"      => []
+                                ], 404);
+        }
+
+
+        $req                = $request->all();
+        $req['people_id']   = $record->id;
+        $record->update($req);
+        
+        if ($request->hasFile('profile_pic')) {
+            $logo = $request->profile_pic;
+            $fileName = date('Y') . $logo->getClientOriginalName();
+            $record_details['profile_pic'] = $fileName;
+        }
+        
+        $record_details->update($req);
+    
+            return Response::json([
+                                    'status'        => "success",
+                                    'msg'           => "Update successfully",
+                                    'data'          =>  [
+                                                           
+                                                            'people_id'     => $record->id,
+                                                            'fname'         => $record->fname,
+                                                            'contact_no'    => $record->contact_no,
+                                                            'profile_pic'   => $record_details->profile_pic
+                                                        ]
+                                ], 200);
+    }
+
     
     public function logout()
     {
