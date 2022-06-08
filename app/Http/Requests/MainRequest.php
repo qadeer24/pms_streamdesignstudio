@@ -160,6 +160,10 @@ class MainRequest extends FormRequest
                             'comment'  => 'required'
                         ];
             return $con; 
+        }
+        else if((isset($this->action)) && (($this->action) == "update_profile") ){
+            $con    =   [ 'contact_no'    => 'required|digits:11|numeric' ];
+            return $con; 
         }else{
             return  ['action' => 'required|min:3|regex:/^([^0-9]*)$/'];
         }
