@@ -1105,18 +1105,24 @@ class MainController extends Controller
                                 ], 404);
         }
 
-
-        $req                = $request->all();
-        $req['people_id']   = $record->id;
-        $record->update($req);
-        
         if ($request->hasFile('profile_pic')) {
             $logo = $request->profile_pic;
             $fileName = date('Y') . $logo->getClientOriginalName();
             $record_details['profile_pic'] = $fileName;
         }
+
+        $req                = $request->all();
+        $req['people_id']   = $record->id;
         
-        $record_details->update($req);
+        $record->update([
+            'fname'      => $request->fname,
+            'password'   => Hash::make($request['password']),
+        ]);
+
+        $record_details->update([
+            'email'       => $request->email,
+            'profile_pic' => $request->profile_pic->getClientOriginalName(),
+        ]);
     
             return Response::json([
                                     'status'        => "success",
@@ -1126,6 +1132,7 @@ class MainController extends Controller
                                                             'people_id'     => $record->id,
                                                             'fname'         => $record->fname,
                                                             'contact_no'    => $record->contact_no,
+                                                            'email'         => $record_details->email,
                                                             'profile_pic'   => $record_details->profile_pic
                                                         ]
                                 ], 200);
