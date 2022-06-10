@@ -57,9 +57,12 @@ use App\Events\Message;
         Route::post("fetch_provinces",[MainController::class, 'fetch_provinces']);
         Route::post("fetch_ratings",[MainController::class, 'fetch_ratings']);
         Route::post("update_profile",[MainController::class, 'update_profile']);
+<<<<<<< HEAD
         Route::post("store_people_vehicle",[MainController::class, 'store_people_vehicle']);
         Route::post("update_people_vehicle",[MainController::class, 'update_people_vehicle']);
         Route::post("fetch_people_vehicle",[MainController::class, 'fetch_people_vehicle']);
+=======
+>>>>>>> a54410f1f74655137ed9e204490ac75979bdd038
 
         // Route::get("chart/{captain_id}",[CaptainController::class, 'charts']);
         Route::get("fetch_cities",[MainController::class, 'fetch_cities']);

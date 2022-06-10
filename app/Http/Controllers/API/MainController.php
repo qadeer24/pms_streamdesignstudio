@@ -1106,6 +1106,14 @@ class MainController extends Controller
                                 ], 404);
         }
 
+<<<<<<< HEAD
+=======
+        if ($request->hasFile('profile_pic')) {
+            $logo = $request->profile_pic;
+            $fileName = date('Y') . $logo->getClientOriginalName();
+            $record_details['profile_pic'] = $fileName;
+        }
+>>>>>>> a54410f1f74655137ed9e204490ac75979bdd038
 
         $req                = $request->all();
         $req['people_id']   = $record->id;
@@ -1117,7 +1125,11 @@ class MainController extends Controller
 
         $record_details->update([
             'email'       => $request->email,
+<<<<<<< HEAD
             'profile_pic' => $request->profile_pic,
+=======
+            'profile_pic' => $request->profile_pic->getClientOriginalName(),
+>>>>>>> a54410f1f74655137ed9e204490ac75979bdd038
         ]);
     
             return Response::json([
@@ -1128,6 +1140,7 @@ class MainController extends Controller
                                                             'people_id'     => $record->id,
                                                             'fname'         => $record->fname,
                                                             'contact_no'    => $record->contact_no,
+<<<<<<< HEAD
                                                             'email'         => $record_details->email
                                                             // 'profile_pic'   => $record_details->profile_pic
                                                         ]
@@ -1213,6 +1226,13 @@ class MainController extends Controller
 
 
     
+=======
+                                                            'email'         => $record_details->email,
+                                                            'profile_pic'   => $record_details->profile_pic
+                                                        ]
+                                ], 200);
+    }
+>>>>>>> a54410f1f74655137ed9e204490ac75979bdd038
 
     
     public function logout()
