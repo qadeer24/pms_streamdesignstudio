@@ -32,15 +32,8 @@ class MainRequest extends FormRequest
                             'license_no'              => 'required|min:3',
                             'age'                     => 'required|numeric',
                             'dob'                     => 'required|date',
-                            'expire_date'             => 'required|date|after:dob',
+                            'expire_date'             => 'required|date|after:dob'
                             
-                            'vehicle_registration'    => 'required',
-                            'car_year'                => 'required',
-                            'make'                    => 'required|min:3|regex:/^([^0-9]*)$/',
-                            'modal'                   => 'required',
-                            'color'                   => 'required',
-                            'seat'                    => 'required|numeric',
-                            'tax_pic'                 => 'image|mimes:jpeg,png,jpg,gif|max:2048',
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "verify_otp") ){
@@ -160,9 +153,29 @@ class MainRequest extends FormRequest
                             'comment'  => 'required'
                         ];
             return $con; 
-        }
-        else if((isset($this->action)) && (($this->action) == "update_profile") ){
+        }else if((isset($this->action)) && (($this->action) == "update_profile") ){
             $con    =   [ 'contact_no'    => 'required|digits:11|numeric' ];
+            return $con; 
+        }else if((isset($this->action)) && (($this->action) == "store_people_vehicle") ){
+            $con    =   [
+                            'contact_no'            => 'required',
+                            'vehicle_name'          => 'required',
+                            'vehicle_registration'  => 'required',
+                            'make'                  => 'required',
+                            'modal'                 => 'required',
+                            'year'                  => 'required',
+                            'color'                 => 'required',
+                            'seat'                  => 'required|numeric',
+                            'tax_pic'               => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+                        ];
+            return $con; 
+        }else if((isset($this->action)) && (($this->action) == "update_people_vehicle") ){
+            $con    =   [ 'contact_no'    => 'required|digits:11|numeric' ];
+            return $con; 
+        }else if((isset($this->action)) && (($this->action) == "fetch_people_vehicle") ){
+            $con    =   [
+                            'people_id'         => 'required|numeric'
+                        ];
             return $con; 
         }else{
             return  ['action' => 'required|min:3|regex:/^([^0-9]*)$/'];

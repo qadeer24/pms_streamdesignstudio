@@ -19,6 +19,7 @@ class Booking extends Model
         'arrangment',
         'cancel_reason_id',
         'cancel_reason',
+        'cancel',
         'status_id',
         'active'
     ];

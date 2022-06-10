@@ -16,6 +16,7 @@ use App\Models\Schedule;
 use Illuminate\Http\Request;
 use App\Models\People_detail;
 use App\Models\People_rating;
+use App\Models\Vehicle_information;
 use App\Http\Requests\MainRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
@@ -1108,15 +1109,16 @@ class MainController extends Controller
 
         $req                = $request->all();
         $req['people_id']   = $record->id;
-        $record->update($req);
         
-        if ($request->hasFile('profile_pic')) {
-            $logo = $request->profile_pic;
-            $fileName = date('Y') . $logo->getClientOriginalName();
-            $record_details['profile_pic'] = $fileName;
-        }
-        
-        $record_details->update($req);
+        $record->update([
+            'fname'      => $request->fname,
+            'password'   => Hash::make($request['password']),
+        ]);
+
+        $record_details->update([
+            'email'       => $request->email,
+            'profile_pic' => $request->profile_pic,
+        ]);
     
             return Response::json([
                                     'status'        => "success",
@@ -1126,10 +1128,91 @@ class MainController extends Controller
                                                             'people_id'     => $record->id,
                                                             'fname'         => $record->fname,
                                                             'contact_no'    => $record->contact_no,
-                                                            'profile_pic'   => $record_details->profile_pic
+                                                            'email'         => $record_details->email
+                                                            // 'profile_pic'   => $record_details->profile_pic
                                                         ]
                                 ], 200);
     }
+    
+    
+    public function store_people_vehicle(MainRequest $request)
+    {
+        $record                =  People::where('contact_no', $request->contact_no)->first();
+        $record_details        =  Vehicle_information::where('people_id', $record->id)->first();
+
+
+        if (!( empty($record_details)) ){
+            return Response::json([
+                'status'    => "failed",
+                'msg'       => 'Details are already added',
+                "data"      => []
+            ], 404);
+        }
+
+
+        if(empty($record)){
+            return Response::json([
+                                    'status'    => "failed",
+                                    'msg'       => 'Couldn\'t find your Account.',
+                                    "data"      => []
+                                ], 404);
+        }
+        
+
+        // BEGIN::store detail in Vehicle_information table
+            $req                = $request->all();
+            $req['people_id']   = $record->id;
+            $req                = Vehicle_information::create($req);
+        // END::store detail in Vehicle_information table
+
+        return Response::json([
+                                'status'        => "success",
+                                'msg'           => "Details added successfully",
+                                'data'          =>  [
+                                                        'people_id'            => $record->id,
+                                                        'vehicle_name'         => $record_details->vehicle_name,
+                                                        'vehicle_registration' => $record_details->vehicle_registration,
+                                                        'make'                 => $record_details->make,
+                                                        'modal'                => $record_details->modal,
+                                                        'year'                 => $record_details->year,
+                                                        'color'                => $record_details->color,
+                                                        'seat'                 => $record_details->seat
+                                                    ]
+                            ], 200);
+    }
+
+
+
+    public function fetch_people_vehicle(MainRequest $request)
+    {
+        $record                =  People::where('contact_no', $request->contact_no)->first();
+        $vehicle_informations  = Vehicle_information::where('vehicle_informations.active',1)
+                                ->where('vehicle_informations.people_id',$request->people_id)
+                                ->select(
+                                        'id as vehicle_id',
+                                        'vehicle_name as vehicle_name',
+                                        'vehicle_registration as vehicle_registration',
+                                        'make as make_company',
+                                        'modal as car_modal',
+                                        'year as car_year',
+                                        'color as car_color',
+                                        'seat as car_seat',
+                                        'tax_pic as tax_pic'
+                                    )
+                                ->get();
+
+
+        return Response::json([
+                                'status'        => "success",
+                                'msg'           => "vehicle fetched by people successfully",
+                                'data'          => [
+                                                        'vehicle_informations' =>  $vehicle_informations 
+                                                ]
+                            ], 200);
+    }
+
+
+    
 
     
     public function logout()
