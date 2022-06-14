@@ -104,6 +104,8 @@ class MainController extends Controller
                                 'data'          =>  [
                                                         'token'                 => $token,
                                                         'fname'                 => $record->fname,
+                                                        'email'                 => $record_details->email,
+                                                        'profile_pic'           => $record_details->profile_pic,
                                                         'people_id'             => $record->id,
                                                         'type'                  => $type,
                                                         'role'                  => $role, // toggle role in app
@@ -1218,8 +1220,8 @@ class MainController extends Controller
     public function fetch_people_vehicle(MainRequest $request)
     {
         $record                =  People::where('contact_no', $request->contact_no)->first();
-        $People_vehicles  = People_vehicle::where('People_vehicles.active',1)
-                                ->where('People_vehicles.people_id',$request->people_id)
+        $people_vehicles       =  People_vehicle::where('people_vehicles.active',1)
+                                ->where('people_vehicles.people_id',$request->people_id)
                                 ->select(
                                         'id as vehicle_id',
                                         'vehicle_name as vehicle_name',
@@ -1238,7 +1240,7 @@ class MainController extends Controller
                                 'status'        => "success",
                                 'msg'           => "vehicle fetched by people successfully",
                                 'data'          => [
-                                                        'People_vehicles' =>  $People_vehicles 
+                                                        'people_vehicles' =>  $people_vehicles 
                                                 ]
                             ], 200);
     }
