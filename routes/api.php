@@ -21,6 +21,7 @@ use App\Events\Message;
     //     return ['status'        => "success"];
     // });
 // Route::group(['prefix' => 'captain'], function () {
+    Route::get("fetch_cities",[MainController::class, 'fetch_cities']);
     Route::post("login",[MainController::class, 'login']);
     Route::post("register",[MainController::class, 'register'])->name('register');
     Route::post("verify_otp",[MainController::class, 'verify_otp']);
@@ -62,7 +63,6 @@ use App\Events\Message;
         Route::post("fetch_people_vehicle",[MainController::class, 'fetch_people_vehicle']);
 
         // Route::get("chart/{captain_id}",[CaptainController::class, 'charts']);
-        Route::post("fetch_cities",[MainController::class, 'fetch_cities']);
         Route::post("logout",[MainController::class, 'logout']);
     });
     
