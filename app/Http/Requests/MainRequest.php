@@ -143,7 +143,6 @@ class MainRequest extends FormRequest
                             'end_time'          => 'required|date_format:H',
                             'start_date'        => 'required|date_format:Y-m-d',
                             'end_date'          => 'required|date_format:Y-m-d',
-<<<<<<< HEAD
                         ];
             return $con; 
         }
@@ -171,26 +170,14 @@ class MainRequest extends FormRequest
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_people_vehicle") ){
-            $con    =   [ 'contact_no'    => 'required|digits:11|numeric' ];
+            $con    =   [ 'contact_no'    => 'required|digits:11|numeric',
+                          'id'            => 'required|numeric'
+                        ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_people_vehicle") ){
             $con    =   [
                             'people_id'         => 'required|numeric'
-=======
->>>>>>> a54410f1f74655137ed9e204490ac75979bdd038
                         ];
-            return $con; 
-        }
-        else if((isset($this->action)) && (($this->action) == "fetch_ratings") ){
-            $con    =   [
-                            'name'     => 'required',
-                            'star'     => 'required',
-                            'comment'  => 'required'
-                        ];
-            return $con; 
-        }
-        else if((isset($this->action)) && (($this->action) == "update_profile") ){
-            $con    =   [ 'contact_no'    => 'required|digits:11|numeric' ];
             return $con; 
         }else{
             return  ['action' => 'required|min:3|regex:/^([^0-9]*)$/'];
@@ -221,6 +208,8 @@ class MainRequest extends FormRequest
             'password.required'     => 'Password field is required!',
             'password.min'          => 'Password must be 8 character long!',
             'role.required'         => 'Role is required use value i.e. Captain, Passenger!',
+
+            'id.required'           => 'Vehicle id is required'
             
         ];
     }

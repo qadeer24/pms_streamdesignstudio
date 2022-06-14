@@ -16,7 +16,7 @@ use App\Models\Schedule;
 use Illuminate\Http\Request;
 use App\Models\People_detail;
 use App\Models\People_rating;
-use App\Models\Vehicle_information;
+use App\Models\People_vehicle;
 use App\Http\Requests\MainRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
@@ -1106,14 +1106,6 @@ class MainController extends Controller
                                 ], 404);
         }
 
-<<<<<<< HEAD
-=======
-        if ($request->hasFile('profile_pic')) {
-            $logo = $request->profile_pic;
-            $fileName = date('Y') . $logo->getClientOriginalName();
-            $record_details['profile_pic'] = $fileName;
-        }
->>>>>>> a54410f1f74655137ed9e204490ac75979bdd038
 
         $req                = $request->all();
         $req['people_id']   = $record->id;
@@ -1125,11 +1117,7 @@ class MainController extends Controller
 
         $record_details->update([
             'email'       => $request->email,
-<<<<<<< HEAD
             'profile_pic' => $request->profile_pic,
-=======
-            'profile_pic' => $request->profile_pic->getClientOriginalName(),
->>>>>>> a54410f1f74655137ed9e204490ac75979bdd038
         ]);
     
             return Response::json([
@@ -1140,7 +1128,6 @@ class MainController extends Controller
                                                             'people_id'     => $record->id,
                                                             'fname'         => $record->fname,
                                                             'contact_no'    => $record->contact_no,
-<<<<<<< HEAD
                                                             'email'         => $record_details->email
                                                             // 'profile_pic'   => $record_details->profile_pic
                                                         ]
@@ -1151,7 +1138,7 @@ class MainController extends Controller
     public function store_people_vehicle(MainRequest $request)
     {
         $record                =  People::where('contact_no', $request->contact_no)->first();
-        $record_details        =  Vehicle_information::where('people_id', $record->id)->first();
+        $record_details        =  People_vehicle::where('people_id', $record->id)->first();
 
 
         if (!( empty($record_details)) ){
@@ -1172,11 +1159,11 @@ class MainController extends Controller
         }
         
 
-        // BEGIN::store detail in Vehicle_information table
+        // BEGIN::store detail in People_vehicle table
             $req                = $request->all();
             $req['people_id']   = $record->id;
-            $req                = Vehicle_information::create($req);
-        // END::store detail in Vehicle_information table
+            $req                = People_vehicle::create($req);
+        // END::store detail in People_vehicle table
 
         return Response::json([
                                 'status'        => "success",
@@ -1196,11 +1183,43 @@ class MainController extends Controller
 
 
 
+    public function update_people_vehicle(MainRequest $request)
+    {
+        $record                =  People::where('contact_no', $request->contact_no)->first();
+        $record_details        =  People_vehicle::where('people_id', $record->id)->first()->where('id',$request->id)->first();
+
+        $req                = $request->all();
+        $req['people_id']   = $record->id;
+
+        $record_details->update($req);
+
+    
+            return Response::json([
+                                    'status'        => "success",
+                                    'msg'           => "Update successfully",
+                                    'data'          =>  [
+                                                           
+                                                            'people_id'            => $record->id,
+                                                        'vehicle_name'         => $record_details->vehicle_name,
+                                                        'vehicle_registration' => $record_details->vehicle_registration,
+                                                        'make'                 => $record_details->make,
+                                                        'modal'                => $record_details->modal,
+                                                        'year'                 => $record_details->year,
+                                                        'color'                => $record_details->color,
+                                                        'seat'                 => $record_details->seat,
+                                                        'tax_pic'              => $record_details->tax_pic
+                                                            
+                                                        ]
+                                ], 200);
+    }
+
+
+
     public function fetch_people_vehicle(MainRequest $request)
     {
         $record                =  People::where('contact_no', $request->contact_no)->first();
-        $vehicle_informations  = Vehicle_information::where('vehicle_informations.active',1)
-                                ->where('vehicle_informations.people_id',$request->people_id)
+        $People_vehicles  = People_vehicle::where('People_vehicles.active',1)
+                                ->where('People_vehicles.people_id',$request->people_id)
                                 ->select(
                                         'id as vehicle_id',
                                         'vehicle_name as vehicle_name',
@@ -1219,20 +1238,13 @@ class MainController extends Controller
                                 'status'        => "success",
                                 'msg'           => "vehicle fetched by people successfully",
                                 'data'          => [
-                                                        'vehicle_informations' =>  $vehicle_informations 
+                                                        'People_vehicles' =>  $People_vehicles 
                                                 ]
                             ], 200);
     }
 
 
     
-=======
-                                                            'email'         => $record_details->email,
-                                                            'profile_pic'   => $record_details->profile_pic
-                                                        ]
-                                ], 200);
-    }
->>>>>>> a54410f1f74655137ed9e204490ac75979bdd038
 
     
     public function logout()
