@@ -1095,6 +1095,7 @@ class MainController extends Controller
     
     public function update_profile(MainRequest $request)
     {
+        $token = null;
         $record             = People::where('contact_no', $request->contact_no)->first();
         $record_details     = People_detail::where('people_id', $record->id)->first();
         
@@ -1108,19 +1109,51 @@ class MainController extends Controller
                                 ], 404);
         }
 
-
         $req                = $request->all();
         $req['people_id']   = $record->id;
-        
-        $record->update([
-            'fname'      => $request->fname,
-            'password'   => Hash::make($request['password']),
-        ]);
 
+        // checking password
+        if(isset($request->old_password)){
+            if(!(Hash::check($request->old_password, $record->password))) {
+                return Response::json([
+                    'status'    => "failed",
+                    'msg'       => 'Invalid password',
+                    "data"      => []
+                ], 404);
+    
+            } 
+
+            $record->update([
+                'fname'      => $request->fname,
+                'password'   => Hash::make($request['password']),
+            ]);
+
+             
+            // if above all condition 
+            // delete all previous tokens of this ID
+            $record->tokens()
+                ->where('tokenable_id', $record->id)
+                ->where('name', 'people-token')
+                ->delete();
+
+            // create new token for this ID
+            $token   = $record->createToken('people-token')->plainTextToken;
+
+
+        }else{
+            $record->update([
+                'fname'      => $request->fname
+            ]);
+        }
+        
         $record_details->update([
             'email'       => $request->email,
             'profile_pic' => $request->profile_pic,
         ]);
+
+        if (is_null($token)) {
+            # code...
+      
     
             return Response::json([
                                     'status'        => "success",
@@ -1134,6 +1167,20 @@ class MainController extends Controller
                                                             // 'profile_pic'   => $record_details->profile_pic
                                                         ]
                                 ], 200);
+        }else{
+            return Response::json([
+                'status'        => "success",
+                'msg'           => "Update successfully",
+                'data'          =>  [
+                                        'token'         => $token,
+                                        'people_id'     => $record->id,
+                                        'fname'         => $record->fname,
+                                        'contact_no'    => $record->contact_no,
+                                        'email'         => $record_details->email
+                                        // 'profile_pic'   => $record_details->profile_pic
+                                    ]
+            ], 200);
+        }
     }
     
     
