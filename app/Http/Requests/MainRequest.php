@@ -154,7 +154,11 @@ class MainRequest extends FormRequest
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_profile") ){
-            $con    =   [ 'contact_no'    => 'required|digits:11|numeric' ];
+            $con    =   [ 'contact_no'    => 'required|digits:11|numeric',
+                          'fname'         => 'required',
+                          'email'         => 'required',
+                          'profile_pic'   => 'required',
+                        ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_people_vehicle") ){
             $con    =   [
