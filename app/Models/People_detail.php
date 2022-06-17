@@ -23,6 +23,7 @@ class People_detail extends Model
         'vehicle_registration',
         'manufacturer',
         'car_year',
+        'make',
         'modal',
         'color',
         'seat',

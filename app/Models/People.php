@@ -17,10 +17,10 @@ class People extends Authenticatable
     protected $fillable = [
         'type',
         'role',
+        'cnic',
         'fname',
         'password',
         'contact_no',
-        'cnic',
         'verified',
         'active',
         'forgot',

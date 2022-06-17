@@ -8,8 +8,9 @@ use App\Http\Controllers\API\MainController;
 use App\Http\Controllers\API\PassengerController;
 
 use App\Events\Message;
-
+Route::get("fetch_cities",[MainController::class, 'fetch_cities']);
     Route::post('/messages', [App\Http\Controllers\MessageController::class, 'message']);
+    Route::post('/fetch_messages', [App\Http\Controllers\MessageController::class, 'fetch_messages']);
     // Route::post('/messages', function(Request $request){
     //     event(
     //             new Message(
@@ -21,6 +22,7 @@ use App\Events\Message;
     //     return ['status'        => "success"];
     // });
 // Route::group(['prefix' => 'captain'], function () {
+    Route::post("logout",[MainController::class, 'logout']);
     Route::get("fetch_cities",[MainController::class, 'fetch_cities']);
     Route::post("login",[MainController::class, 'login']);
     Route::post("register",[MainController::class, 'register'])->name('register');
@@ -62,7 +64,11 @@ use App\Events\Message;
         Route::post("update_people_vehicle",[MainController::class, 'update_people_vehicle']);
         Route::post("fetch_people_vehicle",[MainController::class, 'fetch_people_vehicle']);
 
+        // Route::post("add_vehicle",[MainController::class, 'add_vehicle']);
+
         // Route::get("chart/{captain_id}",[CaptainController::class, 'charts']);
+        //Route::get("fetch_cities",[MainController::class, 'fetch_cities']);
+
         Route::post("logout",[MainController::class, 'logout']);
     });
     

@@ -105,7 +105,7 @@ class MainController extends Controller
                                                         'token'                 => $token,
                                                         'fname'                 => $record->fname,
                                                         'email'                 => $record_details->email,
-                                                        'profile_pic'           => $record_details->profile_pic,
+                                                        'profile_pic'           => "/public/uploads/peoples/".($record_details->profile_pic),
                                                         'people_id'             => $record->id,
                                                         'type'                  => $type,
                                                         'role'                  => $role, // toggle role in app
@@ -1079,7 +1079,7 @@ class MainController extends Controller
                             ], 200);
     }
 
-
+    
     public function fetch_cities()
     {
         $record     = City::select('id','name','lat','lng')->where('active',1)->get()->toArray();
@@ -1109,10 +1109,6 @@ class MainController extends Controller
                                 ], 404);
         }
 
-        $req                = $request->all();
-        $req['people_id']   = $record->id;
-
-        // checking password
         if(isset($request->old_password)){
             if(!(Hash::check($request->old_password, $record->password))) {
                 return Response::json([
@@ -1121,7 +1117,8 @@ class MainController extends Controller
                     "data"      => []
                 ], 404);
     
-            } 
+            }
+         
 
             $record->update([
                 'fname'      => $request->fname,
@@ -1145,43 +1142,71 @@ class MainController extends Controller
                 'fname'      => $request->fname
             ]);
         }
-        
-        $record_details->update([
-            'email'       => $request->email,
-            'profile_pic' => $request->profile_pic,
-        ]);
 
-        if (is_null($token)) {
-            # code...
-      
-    
+
+        try {
+            // Transaction
+            $exception = DB::transaction(function()  use ($request,$record,$token,$record_details) {
+
+                $req                = $request->all();
+                $req['people_id']   = $record->id;
+        
+                // checking password
+
+        
+                $input       = $request->all();   
+                // uploading image
+                if(!empty($input['profile_pic'])){
+        
+                    // delete the previous image
+                    if($record_details->profile_pic != ""){
+                        unlink(public_path('uploads/peoples/'.$record_details->profile_pic));
+                    }
+        
+                    $input['profile_pic'] = rand().'.'.$request->profile_pic->extension();  
+                    $request->profile_pic->move(public_path("uploads/peoples"), $input['profile_pic']);
+                    
+                    $record_details->update([
+                        'email'       => $request->email,
+                        'profile_pic' => $input['profile_pic'],
+                    ]);
+                }
+        
+                
+                $record_details->update([
+                    'email'       => $request->email
+                ]);
+               
+
+            });
+            if(is_null($exception)) {
+                return Response::json([
+                    'status'        => "success",
+                    'msg'           => "Schedule added successfully",
+                    "data"          => [
+                                            'people_id'     => $record->id,
+                                            'fname'         => $record->fname,
+                                            'contact_no'    => $record->contact_no,
+                                            'email'         => $record_details->email,
+                                            'profile_pic'   => "/public/uploads/peoples/".($record_details->profile_pic)
+                                       ]
+                ], 200);
+            }else {
+                throw new Exception;
+            }
+        }
+        
+        catch(\Exception $e) {
+            // dd($e);
+            app('App\Http\Controllers\MailController')->send_exception($e);
             return Response::json([
-                                    'status'        => "success",
-                                    'msg'           => "Update successfully",
-                                    'data'          =>  [
-                                                           
-                                                            'people_id'     => $record->id,
-                                                            'fname'         => $record->fname,
-                                                            'contact_no'    => $record->contact_no,
-                                                            'email'         => $record_details->email
-                                                            // 'profile_pic'   => $record_details->profile_pic
-                                                        ]
-                                ], 200);
-        }else{
-            return Response::json([
-                'status'        => "success",
-                'msg'           => "Update successfully",
-                'data'          =>  [
-                                        'token'         => $token,
-                                        'people_id'     => $record->id,
-                                        'fname'         => $record->fname,
-                                        'contact_no'    => $record->contact_no,
-                                        'email'         => $record_details->email
-                                        // 'profile_pic'   => $record_details->profile_pic
-                                    ]
-            ], 200);
+                'status'    => "failed",
+                'msg'       => 'Something went wrong',
+                "data"      => []
+            ], 404);
         }
     }
+    
     
     
     public function store_people_vehicle(MainRequest $request)
@@ -1248,7 +1273,7 @@ class MainController extends Controller
                                     'msg'           => "Update successfully",
                                     'data'          =>  [
                                                            
-                                                            'people_id'            => $record->id,
+                                                        'people_id'            => $record->id,
                                                         'vehicle_name'         => $record_details->vehicle_name,
                                                         'vehicle_registration' => $record_details->vehicle_registration,
                                                         'make'                 => $record_details->make,
@@ -1291,9 +1316,6 @@ class MainController extends Controller
                                                 ]
                             ], 200);
     }
-
-
-    
 
     
     public function logout()

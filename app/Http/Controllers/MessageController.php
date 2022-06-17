@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Response;
 use App\Models\Message;
+use App\Models\People;
 use App\Events\MessageEvent;
 use Illuminate\Http\Request;
 
@@ -27,6 +28,27 @@ class MessageController extends Controller
             'status'        => "success",
             'msg'           => "Message send successfully"
         ], 200);
+    }
+
+    public function fetch_messages(Request $request)
+    {
+        $messages               =  Message::where('messages.active',1)
+                                ->where('messages.sender_id',$request->sender_id)->where('messages.receiver_id',$request->receiver_id)
+                                ->select(
+                                        'message as message',
+                                        'sender_id as sender',
+                                        'receiver_id as receiver'
+                                    )
+                                ->get();
+
+
+        return Response::json([
+                                'status'        => "success",
+                                'msg'           => "People message fetched successfully",
+                                'data'          => [
+                                                        'people messages' =>  $messages 
+                                                ]
+                            ], 200);
     }
 }
 

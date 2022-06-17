@@ -20,6 +20,7 @@ class People_vehicle extends Model
         'year',
         'color',
         'seat',
+        'cnic',
         'tax_pic',
         'active'        
     ];

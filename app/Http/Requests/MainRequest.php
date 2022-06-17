@@ -157,8 +157,13 @@ class MainRequest extends FormRequest
             $con    =   [ 'contact_no'    => 'required|digits:11|numeric',
                           'fname'         => 'required',
                           'email'         => 'required',
-                          'profile_pic'   => 'required',
+                        //   'profile_pic'   => 'required',
                         ];
+
+                        
+            if(!empty($this->profile_pic)){
+                $con['profile_pic']     = 'required|image|mimes:jpeg,png,jpg,gif|max:2048';
+            }
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_people_vehicle") ){
             $con    =   [
@@ -172,6 +177,8 @@ class MainRequest extends FormRequest
                             'seat'                  => 'required|numeric',
                             'tax_pic'               => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
                         ];
+
+            
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_people_vehicle") ){
             $con    =   [ 'contact_no'    => 'required|digits:11|numeric',
@@ -183,6 +190,25 @@ class MainRequest extends FormRequest
                             'people_id'         => 'required|numeric'
                         ];
             return $con; 
+        }else if((isset($this->action)) && (($this->action) == "logout") ){
+            $con    =   [
+                            'people_id'         => 'required|numeric'
+                        ];
+            return $con; 
+        // }else if((isset($this->action)) && (($this->action) == "add_vehicle") ){
+        //     $con    =   [
+        //                     'contact_no'            => 'required',
+        //                     'vehicle_registration'  => 'required',
+        //                     'make'                  => 'required',
+        //                     'modal'                 => 'required',
+        //                     'color'                 => 'required',
+        //                     'seat'                  => 'required|numeric',
+        //                     'cnic'                  => 'required|digits:13|numeric|unique:people,cnic',
+        //                     'year'                  => 'required',
+        //                     'tax_pic'               => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        //                 ];
+        //     return $con; 
+        // }
         }else{
             return  ['action' => 'required|min:3|regex:/^([^0-9]*)$/'];
         }

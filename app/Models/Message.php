@@ -15,6 +15,8 @@ class Message extends Model
         'sender_id',
         'receiver_id',
         'active',
+        'created_by',
+        'updated_by'
     ];
     public function getActiveAttribute($value)
     {
