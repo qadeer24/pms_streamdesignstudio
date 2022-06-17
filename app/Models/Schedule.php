@@ -14,6 +14,7 @@ class Schedule extends Model
     protected $dates    = ['deleted_at'];
     protected $fillable = [
         'captain_id',
+        'vehicle_id',
 
         'pickup_city_id',
         'pickup_lat',
@@ -69,6 +70,9 @@ class Schedule extends Model
         
     }
 
+    public function getActiveAttribute($value)
+    {
+        return ($value == 1) ? "Active" : "Inactive";
+    }
 
-    
 }

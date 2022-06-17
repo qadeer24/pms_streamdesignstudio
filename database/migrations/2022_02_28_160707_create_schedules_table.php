@@ -17,6 +17,8 @@ class CreateSchedulesTable extends Migration
             $table->increments('id');
             $table->unsignedInteger('captain_id');
 
+            $table->unsignedInteger('vehicle_id')->comment('people_vehicles'); 
+
             $table->unsignedInteger('pickup_city_id');
             $table->string('pickup_lat')->nullable();
             $table->string('pickup_lng')->nullable();

@@ -68,6 +68,7 @@ class MainRequest extends FormRequest
         }else if((isset($this->action)) && (($this->action) == "store_schedule") ){
             $con    =   [
                             'people_id'         => 'required|numeric',
+                            'vehicle_id'        => 'required|numeric',
 
                             'pickup_city_id'    => 'required|numeric',
                             'pickup_lat'        => 'required|numeric',
@@ -181,8 +182,8 @@ class MainRequest extends FormRequest
             
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_people_vehicle") ){
-            $con    =   [ 'contact_no'    => 'required|digits:11|numeric',
-                          'id'            => 'required|numeric'
+            $con    =   [ 
+                          'vehicle_id'            => 'required|numeric'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_people_vehicle") ){

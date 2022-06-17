@@ -1156,19 +1156,25 @@ class MainController extends Controller
         
                 $input       = $request->all();   
                 // uploading image
-                if(!empty($input['profile_pic'])){
+                if( (array_key_exists("profile_pic",$input)) && (!empty($input['profile_pic']))  ){
         
                     // delete the previous image
                     if($record_details->profile_pic != ""){
                         unlink(public_path('uploads/peoples/'.$record_details->profile_pic));
                     }
         
-                    $input['profile_pic'] = rand().'.'.$request->profile_pic->extension();  
-                    $request->profile_pic->move(public_path("uploads/peoples"), $input['profile_pic']);
+                    // $input['profile_pic'] = rand().'.'.$request->profile_pic->extension();  
+                    // $request->profile_pic->move(public_path("uploads/peoples"), $input['profile_pic']);
+
+                    $image          = $request->file('image');
+                    $new_name       = rand().'.'.$image->getClientOriginalExtension();
+                                        $image->move(public_path("uploads/peoples"),$new_name);
+
+
                     
                     $record_details->update([
                         'email'       => $request->email,
-                        'profile_pic' => $input['profile_pic'],
+                        'profile_pic' => $new_name,
                     ]);
                 }
         
@@ -1202,7 +1208,7 @@ class MainController extends Controller
             return Response::json([
                 'status'    => "failed",
                 'msg'       => 'Something went wrong',
-                "data"      => []
+                "data"      => $e
             ], 404);
         }
     }
@@ -1259,62 +1265,107 @@ class MainController extends Controller
 
     public function update_people_vehicle(MainRequest $request)
     {
-        $record                =  People::where('contact_no', $request->contact_no)->first();
-        $record_details        =  People_vehicle::where('people_id', $record->id)->first()->where('id',$request->id)->first();
+        $pth                    = "";
+        $input                  = $request->all();  
+        $record_details         = People_vehicle::where('id',$request->vehicle_id)->first();
 
-        $req                = $request->all();
-        $req['people_id']   = $record->id;
+        // if vehicle exists 
+        if(isset( $record_details->id )){
+            // uploading image
+            if( (array_key_exists("tax_pic",$input)) && (!empty($input['tax_pic']))  ){
 
-        $record_details->update($req);
+                // delete the previous image
+                if($record_details->tax_pic != ""){
+                    unlink(public_path('uploads/licenses/'.$record_details->tax_pic));
+                }
 
-    
+                // move the image to the licenses directory
+                $input['tax_pic'] = rand().'.'.$request->tax_pic->extension();  
+                $request->tax_pic->move(public_path("uploads/licenses"), $input['tax_pic']);
+                $record_details->update($input);
+            }
+            $record_details->update($input);
+
+            if(isset($record_details->tax_pic)){
+                $pth = "/public/uploads/licenses/".($record_details->tax_pic);  
+            }
             return Response::json([
                                     'status'        => "success",
                                     'msg'           => "Update successfully",
                                     'data'          =>  [
-                                                           
-                                                        'people_id'            => $record->id,
-                                                        'vehicle_name'         => $record_details->vehicle_name,
-                                                        'vehicle_registration' => $record_details->vehicle_registration,
-                                                        'make'                 => $record_details->make,
-                                                        'modal'                => $record_details->modal,
-                                                        'year'                 => $record_details->year,
-                                                        'color'                => $record_details->color,
-                                                        'seat'                 => $record_details->seat,
-                                                        'tax_pic'              => $record_details->tax_pic
+                                                            'people_id'            => $record_details->people_id,
+                                                            'vehicle_name'         => $record_details->vehicle_name,
+                                                            'vehicle_registration' => $record_details->vehicle_registration,
+                                                            'make'                 => $record_details->make,
+                                                            'modal'                => $record_details->modal,
+                                                            'year'                 => $record_details->year,
+                                                            'color'                => $record_details->color,
+                                                            'seat'                 => $record_details->seat,
+                                                            'tax_pic'              => $pth
                                                             
                                                         ]
                                 ], 200);
+
+        }else{
+            return Response::json([
+                'status'    => "failed",
+                'msg'       => 'No vehicle found!',
+                "data"      => []
+            ], 404);
+
+        }
+       
+    }
+
+    public function active_vehicle(MainRequest $request){
+
+        // $upd                = People_vehicle::where('bookings.active',1)
+        //                         ->where('bookings.schedule_id',$request->schedule_id)
+        //                         ->where('bookings.status_id','<=',3)
+        //                         ->update(['status_id' =>  env('STATUS_CANCEL_ID') ]);
+
     }
 
 
 
     public function fetch_people_vehicle(MainRequest $request)
     {
-        $record                =  People::where('contact_no', $request->contact_no)->first();
-        $people_vehicles       =  People_vehicle::where('people_vehicles.active',1)
-                                ->where('people_vehicles.people_id',$request->people_id)
-                                ->select(
-                                        'id as vehicle_id',
-                                        'vehicle_name as vehicle_name',
-                                        'vehicle_registration as vehicle_registration',
-                                        'make as make_company',
-                                        'modal as car_modal',
-                                        'year as car_year',
-                                        'color as car_color',
-                                        'seat as car_seat',
-                                        'tax_pic as tax_pic'
-                                    )
-                                ->get();
+    
+        $people_vehicles       =  People_vehicle::where('people_vehicles.people_id',$request->people_id)
+                                    ->select(
+                                            'id as vehicle_id',
+                                            'vehicle_name as vehicle_name',
+                                            'vehicle_registration as vehicle_registration',
+                                            'make as make_company',
+                                            'modal as car_modal',
+                                            'year as car_year',
+                                            'color as car_color',
+                                            'seat as car_seat',
+                                            'active', // active: 1 OR active : 0
+                                            DB::raw('CONCAT("/public/uploads/licenses/", people_vehicles.tax_pic) as tax_pic')
+                                        )
+                                    ->get();
 
+        if(count($people_vehicles) > 0){
+            return Response::json([
+                'status'        => "success",
+                'msg'           => "vehicle fetched by people successfully",
+                'data'          => [
+                                        'people_vehicles' =>  $people_vehicles 
+                                ]
+            ], 200);
+            
+        }else{
+            return Response::json([
+                'status'        => "success",
+                'msg'           => "no vehicle found",
+                'data'          => [
+                                        'people_vehicles' =>  []
+                                ]
+            ], 200);
+        }
 
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "vehicle fetched by people successfully",
-                                'data'          => [
-                                                        'people_vehicles' =>  $people_vehicles 
-                                                ]
-                            ], 200);
+        
     }
 
     
