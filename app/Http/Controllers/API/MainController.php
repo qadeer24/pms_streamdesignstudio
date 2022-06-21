@@ -79,34 +79,30 @@ class MainController extends Controller
                 ->delete();
 
         // create new token for this ID
-        $token   = $record->createToken('people-token')->plainTextToken;
-        $type    = (((($record->type) =="Captain") || (($record->type) ==1))? "Captain" : "Passenger" );
-        $role    = (((($record->role) =="Captain") || (($record->role) ==1))? "Captain" : "Passenger" );
+        $token      = $record->createToken('people-token')->plainTextToken;
+        $type       = (((($record->type) =="Captain") || (($record->type) ==1))? "Captain" : "Passenger" );
+        $role       = (((($record->role) =="Captain") || (($record->role) ==1))? "Captain" : "Passenger" );
 
 
-        $request->people_id=    $record->id;
-        if(($record->role  == "Captain") || ($record->role == 1) ){
-            $records    = $this->fetch_schedules($request,true);
-        }else{
-            $records    = $this->fetch_bookings($request,true);
-        }
+        $request->people_id =    $record->id;
 
-        // dd($records);
-        $bool = "";
-        if (!empty($record_details)) {
-            $bool = true;
-        }else{
-            $bool = false;
-        }
+        $records    = (($record->role  == "Captain") || ($record->role == 1) ) ? ($this->fetch_schedules($request,true)) :($this->fetch_bookings($request,true));
+
+        $bool       = (!empty($record_details)) ? true : false;
+        $pth        = ((isset($record_details->profile_pic))) ? ( "public/uploads/licenses/".($record_details->profile_pic)) : ("public/uploads/no_image.png");
+        $people_id  = (isset($record->id)) ? ($record->id) : "";
+        $fname      = (isset($record->fname)) ? ($record->fname) : "";
+        $email      = (isset($record_details->email)) ? ($record_details->email) : "";
+
         return Response::json([
                                 'status'        => "success",
                                 'msg'           => "Logged in successfully",
                                 'data'          =>  [
                                                         'token'                 => $token,
-                                                        'fname'                 => $record->fname,
-                                                        'email'                 => $record_details->email,
-                                                        'profile_pic'           => "/public/uploads/peoples/".($record_details->profile_pic),
-                                                        'people_id'             => $record->id,
+                                                        'fname'                 => $fname,
+                                                        'email'                 => $email ,
+                                                        'profile_pic'           => $pth,
+                                                        'people_id'             => $people_id,
                                                         'type'                  => $type,
                                                         'role'                  => $role, // toggle role in app
                                                         'records'               => $records,
@@ -483,6 +479,9 @@ class MainController extends Controller
     public function store_details(MainRequest $request)
     {
         $record              = People::where('cnic', $request->cnic)->first();
+        $detail              = People_detail::where('people_id', $record->id)->first();
+        $vehicle             = People_vehicle::where('people_id', $record->id)->first();
+
         if ( empty($record) ){
             return Response::json([
                 'status'    => "failed",
@@ -491,7 +490,6 @@ class MainController extends Controller
             ], 404);
         }
 
-        $detail              = People_detail::where('people_id', $record->id)->first();
         if (!( empty($detail)) ){
             return Response::json([
                 'status'    => "failed",
@@ -499,42 +497,87 @@ class MainController extends Controller
                 "data"      => []
             ], 404);
         }
+
+        try {
+            // Transaction
+            $exception = DB::transaction(function()  use ($request,$record,$detail,$vehicle) {
+
+                // BEGIN::update type of people from passenger to captain to create the ride
+                    $rec['type']         = 1; // 1: captain and 0: passenger
+                    $rec['role']         = 1; // 1: captain and 0: passenger
+                    $record->update($rec);
+                // END::update type of people from passenger to captain to create the ride
+
+                // BEGIN::store detail in people_details table
+                    $input                = $request->all();
+                    $input['people_id']   = $record->id;
+                    $rec                  = People_detail::create($input);
+                // END::store detail in people_details table
+
+                if( (array_key_exists("tax_pic",$input)) && (!empty($input['tax_pic']))  ){
+
+                    // delete the previous image
+                    if(isset($vehicle->tax_pic)){
+                        if (file_exists( public_path('uploads/licenses/'.$vehicle->tax_pic) )){
+                            unlink(public_path('uploads/licenses/'.$vehicle->tax_pic));
+                        }
+                    }
+
+                    // move the image to the licenses directory
+                    $image                  = $request->file('tax_pic');
+                    $input['tax_pic']       = rand().'.'.$image->getClientOriginalExtension();
+                                            $image->move(public_path("uploads/licenses"),$input['tax_pic']);
+
+                }
+
+                // BEGIN::store detail in people_details table
+                    $rec                = People_vehicle::create($input);
+                // END::store detail in people_details table
+
+            });
+
+                
+            if(is_null($exception)) {
+
+                $vehicle             = People_vehicle::where('people_id', $record->id)->first();
+                $vehicle_id          = (isset($vehicle->id))? ($vehicle->id) :null ; 
+
+                return Response::json([
+                                        'status'        => "success",
+                                        'msg'           => "Details added successfully",
+                                        'data'          =>  [
+                                                                'fname'         => $record->fname,
+                                                                'people_id'     => $record->id,
+                                                                'type'          => "Captain",
+                                                                'vehicle_id'    => $vehicle_id
+                                                            ]
+                                    ], 200);
+            }else {
+                throw new Exception;
+            }
+        }
         
-
-        // BEGIN::update type of people from passenger to captain to create the ride
-            $rec['type']         = 1; // 1: captain and 0: passenger
-            $rec['role']         = 1; // 1: captain and 0: passenger
-            $record->update($rec);
-        // END::update type of people from passenger to captain to create the ride
-
-        // BEGIN::store detail in people_details table
-            $req                = $request->all();
-            $req['people_id']   = $record->id;
-            $req                = People_detail::create($req);
-        // END::store detail in people_details table
-
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Details added successfully",
-                                'data'          =>  [
-                                                        'fname'         => $record->fname,
-                                                        'people_id'     => $record->id,
-                                                        'type'          => "Captain"
-                                                    ]
-                            ], 200);
+        catch(\Exception $e) {
+            app('App\Http\Controllers\MailController')->send_exception($e);
+            return Response::json([
+                'status'    => "failed",
+                'msg'       => 'Something went wrong',
+                "data"      => []
+            ], 404);
+        }
     }
 
     public function store_schedule(MainRequest $request)
     {
         $record                 = People::where('id', $request->people_id)
-                                        ->where('type', 1) // 1: captain
-                                        ->first();
+                                    ->where('type', 1) // 1: captain
+                                    ->first();
 
-        $schedule                 = Schedule::where('captain_id', $request->people_id)
-                                        ->where('status_id','!=', env('STATUS_CANCEL_ID')) // cancelled
-                                        ->where('schedule_time', $request->schedule_time)
-                                        ->where('schedule_date', $request->schedule_date)
-                                        ->first();
+        $schedule               = Schedule::where('captain_id', $request->people_id)
+                                    ->where('status_id','!=', env('STATUS_CANCEL_ID')) // cancelled
+                                    ->where('schedule_time', $request->schedule_time)
+                                    ->where('schedule_date', $request->schedule_date)
+                                    ->first();
 
         
         if ( empty($record) ){
@@ -682,57 +725,6 @@ class MainController extends Controller
         }
     }
 
-     public function fetch_bookings(MainRequest $request, $inner_call = FALSE)
-    {
-        $bookings           = Booking::where('bookings.active',1)
-                                ->where('bookings.passenger_id',$request->people_id)
-                                ->where('bookings.status_id','<=',3)
-                                ->leftjoin('schedules', 'schedules.id', '=', 'bookings.schedule_id')
-                                ->leftjoin('people', 'people.id', '=', 'schedules.captain_id')
-                                ->leftjoin('people_details', 'people_details.people_id', '=', 'schedules.captain_id')
-                                ->leftjoin('cities as p_city', 'p_city.id', '=', 'schedules.pickup_city_id')
-                                ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
-                                ->select(
-                                        'schedules.id as schedule_id',
-                                        'schedules.vacant_seat',
-                                        'bookings.id as booking_id',
-                                        'schedules.fare',
-                                        
-                                        'people.fname as cap_name',
-
-                                        'people_details.modal',
-                                        'people_details.make',
-
-                                        DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
-                                        DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
-                                    )
-                                ->get();
-
-        foreach ($bookings as $key => $booking) {
-            $rating     = People_rating::where('people_ratings.schedule_id',$booking->schedule_id)->avg('people_ratings.rating');
-            $seats      = Booking::where('bookings.schedule_id',$booking->schedule_id)
-                            ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
-                            ->sum('book_seat');
-
-            $bookings[$key]->vacant_seat   = (($booking->vacant_seat) -  $seats);
-            $bookings[$key]->rating        = round($rating);
-        }
-
-        if($inner_call){
-            return [
-                            'bookings' => $bookings
-                    ];
-        }
-
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Bookings fetched for passenger successfully",
-                                'data'          => [
-                                                        'bookings' => $bookings
-                                                ]
-                            ], 200);
-    }
-
     public function count_schedules($captain_id){
 
         return  Schedule::where('schedules.active',1)
@@ -752,6 +744,79 @@ class MainController extends Controller
                             return    $seats;
     }
 
+    function fetch_schedule_of_booking($schedule_id){
+        
+        $schedule           = Schedule::where('schedules.active',1)
+                                ->where('schedules.id',$schedule_id)
+                                // ->where('schedules.status_id','<=',3)
+                                ->leftjoin('people', 'people.id', '=', 'schedules.captain_id')
+                                ->leftjoin('people_vehicles', 'people_vehicles.id', '=', 'schedules.vehicle_id')
+                                ->leftjoin('people_details', 'people_details.people_id', '=', 'schedules.captain_id')
+                                ->leftjoin('cities as p_city', 'p_city.id', '=', 'schedules.pickup_city_id')
+                                ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
+                                ->select(
+                                            'people.fname as cap_name',
+                                            'people_details.profile_pic',
+                                            'schedules.fare',
+                                            'schedules.vacant_seat',
+                                            DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
+                                            DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
+                                        )
+                                ->first();
+        return  $schedule;
+
+    }
+
+    public function fetch_bookings(MainRequest $request, $inner_call = FALSE)
+    {
+        $bookings           = Booking::where('bookings.active',1)
+                                ->where('bookings.passenger_id',$request->people_id)
+                                ->where('bookings.status_id','<=',3)
+                                ->select(
+                                            'bookings.id as booking_id',
+                                            'bookings.schedule_id as schedule_id',
+                                        )
+                                ->get();
+                                
+        foreach ($bookings as $key => $booking) {
+
+            $rating                         = People_rating::where('people_ratings.schedule_id',$booking->schedule_id)
+                                                ->avg('people_ratings.rating');
+
+            $seats                          = Booking::where('bookings.schedule_id',$booking->schedule_id)
+                                                ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
+                                                ->sum('book_seat');
+
+            $bookings[$key]->vacant_seat    = (($booking->vacant_seat) -  $seats);
+            $bookings[$key]->rating         = round($rating);
+
+            
+            $schdl                          = $this->fetch_schedule_of_booking($bookings[$key]->schedule_id );
+
+            $bookings[$key]->fare           = (isset($schdl->fare)) ? $schdl->fare : 0;
+            $bookings[$key]->vacant_seat    = (isset($schdl->vacant_seat)) ? $schdl->vacant_seat : 0;
+            $bookings[$key]->pickup_address = (isset($schdl->pickup_address)) ? $schdl->pickup_address : null;
+            $bookings[$key]->dropoff_address= (isset($schdl->dropoff_address)) ? $schdl->dropoff_address : null;
+
+            $bookings[$key]->cap_name       = (isset($schdl->cap_name)) ? $schdl->cap_name : null;
+            $bookings[$key]->profile_pic    = (isset( $schdl->profile_pic)) ? ("public/uploads/peoples/".($schdl->profile_pic)) :( "public/uploads/no_image.png");
+
+        }
+     
+        if($inner_call){
+            return [
+                        'bookings' => $bookings
+                ];
+        }
+
+        return Response::json([
+                                'status'        => "success",
+                                'msg'           => "Bookings fetched for passenger successfully",
+                                'data'          => [
+                                                        'bookings' => $bookings
+                                                ]
+                            ], 200);
+    }
 
     public function fetch_schedules(MainRequest $request, $inner_call = FALSE)
     {
@@ -766,22 +831,29 @@ class MainController extends Controller
                                 ->where('schedules.captain_id',$request->people_id)
                                 ->where('schedules.status_id','<=',3)
                                 ->leftjoin('people', 'people.id', '=', 'schedules.captain_id')
+                                ->leftjoin('people_vehicles', 'people_vehicles.id', '=', 'schedules.vehicle_id')
                                 ->leftjoin('people_details', 'people_details.people_id', '=', 'schedules.captain_id')
                                 ->leftjoin('cities as p_city', 'p_city.id', '=', 'schedules.pickup_city_id')
                                 ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
                                 ->select(
-                                        'schedules.id as schedule_id',
-                                        'schedules.vacant_seat',
-                                        'schedules.fare',
-                                        
-                                        'people.fname as cap_name',
+                                            'schedules.id as schedule_id',
+                                            'schedules.fare',
+                                            'schedules.vacant_seat',
+                                            
+                                            'people.fname as cap_name',
 
-                                        'people_details.modal',
-                                        'people_details.make',
+                                            'people_vehicles.make',
+                                            'people_vehicles.modal',
+                                            'people_details.profile_pic',
+                                            DB::raw('(CASE 
+                                                WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                                ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
+                                                END) AS profile_pic'
+                                            ),
 
-                                        DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
-                                        DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
-                                    )
+                                            DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
+                                            DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
+                                        )
                                 ->get();
 
         $tot_schedules      = $this->count_schedules($request->people_id);
@@ -792,6 +864,8 @@ class MainController extends Controller
             $seats      = Booking::where('bookings.schedule_id',$schedule->schedule_id)
                             ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
                             ->sum('book_seat');
+
+            // $schedules[$key]->profile_pic   = (isset( $schedule->profile_pic)) ? ("public/uploads/peoples/".($schedule->profile_pic)) :( "public/uploads/no_image.png");
 
             $schedules[$key]->vacant_seat   = (($schedule->vacant_seat) -  $seats);
             $schedules[$key]->rating        = round($rating);
@@ -821,6 +895,7 @@ class MainController extends Controller
                                 ->where('schedules.status_id','<=',3)
                                 ->leftjoin('people', 'people.id', '=', 'schedules.captain_id')
                                 ->leftjoin('people_details', 'people_details.people_id', '=', 'people.id')
+                                ->leftjoin('people_vehicles', 'people_vehicles.id', '=', 'schedules.vehicle_id')
                                 ->leftjoin('cities as p_city', 'p_city.id', '=', 'schedules.pickup_city_id')
                                 ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
                                 ->select(
@@ -829,8 +904,13 @@ class MainController extends Controller
                                         
                                         'people.fname as cap_name',
 
-                                        'people_details.modal',
-                                        'people_details.make',
+                                        'people_vehicles.make',
+                                        'people_vehicles.modal',
+                                        DB::raw('(CASE 
+                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                            ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
+                                            END) AS profile_pic'
+                                        ),
 
                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -859,6 +939,7 @@ class MainController extends Controller
                                 ->where('schedules.status_id','<=',3)
                                 ->leftjoin('people', 'people.id', '=', 'schedules.captain_id')
                                 ->leftjoin('people_details', 'people_details.people_id', '=', 'people.id')
+                                ->leftjoin('people_vehicles', 'people_vehicles.id', '=', 'schedules.vehicle_id')
                                 ->leftjoin('cities as p_city', 'p_city.id', '=', 'schedules.pickup_city_id')
                                 ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
                                 ->select(
@@ -867,8 +948,13 @@ class MainController extends Controller
                                         
                                         'people.fname as cap_name',
 
-                                        'people_details.modal',
-                                        'people_details.make',
+                                        'people_vehicles.make',
+                                        'people_vehicles.modal',
+                                        DB::raw('(CASE 
+                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                            ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
+                                            END) AS profile_pic'
+                                        ),
 
                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -898,6 +984,7 @@ class MainController extends Controller
                                 ->where('schedules.status_id','<=',3)
                                 ->leftjoin('people', 'people.id', '=', 'schedules.captain_id')
                                 ->leftjoin('people_details', 'people_details.people_id', '=', 'people.id')
+                                ->leftjoin('people_vehicles', 'people_vehicles.id', '=', 'schedules.vehicle_id')
                                 ->leftjoin('cities as p_city', 'p_city.id', '=', 'schedules.pickup_city_id')
                                 ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
                                 ->select(
@@ -906,10 +993,15 @@ class MainController extends Controller
                                         
                                         'people.fname as cap_name',
 
-                                        'people_details.modal',
-                                        'people_details.make',
+                                        'people_vehicles.make',
+                                        'people_vehicles.modal',
+                                        DB::raw('(CASE 
+                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                            ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
+                                            END) AS profile_pic'
+                                        ),
 
-                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
+                                        DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
                                     )
                                 ->get();
@@ -945,6 +1037,7 @@ class MainController extends Controller
                                 ->where('schedules.status_id','<=',3) 
                                 ->leftjoin('people', 'people.id', '=', 'schedules.captain_id')
                                 ->leftjoin('people_details', 'people_details.people_id', '=', 'people.id')
+                                ->leftjoin('people_vehicles', 'people_vehicles.id', '=', 'schedules.vehicle_id')
                                 ->leftjoin('cities as p_city', 'p_city.id', '=', 'schedules.pickup_city_id')
                                 ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
                                 ->select(
@@ -960,8 +1053,13 @@ class MainController extends Controller
                                         
                                         'people.fname as cap_name',
 
-                                        'people_details.modal',
-                                        'people_details.make',
+                                        'people_vehicles.make',
+                                        'people_vehicles.modal',
+                                        DB::raw('(CASE 
+                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                            ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
+                                            END) AS profile_pic'
+                                        ),
 
                                         DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -1095,12 +1193,11 @@ class MainController extends Controller
     
     public function update_profile(MainRequest $request)
     {
-        $token = null;
+        $token              = null;
         $record             = People::where('contact_no', $request->contact_no)->first();
         $record_details     = People_detail::where('people_id', $record->id)->first();
-        
-        
-        // is user exist
+
+        // BEGIN :: checking is valid contact no
         if(empty($record)){
             return Response::json([
                                     'status'    => "failed",
@@ -1108,102 +1205,160 @@ class MainController extends Controller
                                     "data"      => []
                                 ], 404);
         }
+        // END :: checking is valid contact no
 
+        // BEGIN :: checking is password valid 
         if(isset($request->old_password)){
+
+            if(!(isset($request->new_password))){
+                return Response::json([
+                    'status'    => "failed",
+                    'msg'       => 'please enter new password',
+                    "data"      => []
+                ], 404);
+            }
+
             if(!(Hash::check($request->old_password, $record->password))) {
                 return Response::json([
                     'status'    => "failed",
                     'msg'       => 'Invalid password',
                     "data"      => []
                 ], 404);
-    
             }
-         
-
-            $record->update([
-                'fname'      => $request->fname,
-                'password'   => Hash::make($request['password']),
-            ]);
-
-             
-            // if above all condition 
-            // delete all previous tokens of this ID
-            $record->tokens()
-                ->where('tokenable_id', $record->id)
-                ->where('name', 'people-token')
-                ->delete();
-
-            // create new token for this ID
-            $token   = $record->createToken('people-token')->plainTextToken;
-
-
-        }else{
-            $record->update([
-                'fname'      => $request->fname
-            ]);
         }
+
+        // END :: checking is password valid 
 
 
         try {
             // Transaction
-            $exception = DB::transaction(function()  use ($request,$record,$token,$record_details) {
+            $exception = DB::transaction(function()  use ($request,$record,$record_details,$token) {
+          
+                // update profile with or without password 
+                if(isset($request->old_password)){
+                
+                    // update fname and password
+                    $record->update([
+                        'fname'      => $request->fname,
+                        'password'   => Hash::make($request->new_password),
+                    ]);
+                    
+                   
+                    // delete all previous tokens of this ID
+                    $record->tokens()
+                        ->where('tokenable_id', $record->id)
+                        ->where('name', 'people-token')
+                        ->delete();
 
+                }else{
+                    $record->update([
+                        'fname'      => $request->fname
+                    ]);
+                }
+      
+                // input variables 
                 $req                = $request->all();
+                $input              = $request->all();   
                 $req['people_id']   = $record->id;
-        
-                // checking password
 
-        
-                $input       = $request->all();   
-                // uploading image
+                // BEING :: uploading image
                 if( (array_key_exists("profile_pic",$input)) && (!empty($input['profile_pic']))  ){
         
                     // delete the previous image
-                    if($record_details->profile_pic != ""){
-                        unlink(public_path('uploads/peoples/'.$record_details->profile_pic));
+                    if(isset($record_details->profile_pic)){
+                        if (file_exists( public_path('uploads/peoples/'.$record_details->profile_pic) )){
+                            unlink(public_path('uploads/peoples/'.$record_details->profile_pic));
+                        }
                     }
+
+                    $image                  = $request->file('profile_pic');
+                    $input['profile_pic']   = rand().'.'.$image->getClientOriginalExtension();
+                                              $image->move(public_path("uploads/peoples"),$input['profile_pic']);
         
-                    // $input['profile_pic'] = rand().'.'.$request->profile_pic->extension();  
-                    // $request->profile_pic->move(public_path("uploads/peoples"), $input['profile_pic']);
 
-                    $image          = $request->file('image');
-                    $new_name       = rand().'.'.$image->getClientOriginalExtension();
-                                        $image->move(public_path("uploads/peoples"),$new_name);
+                    // if details not exists
+                    if ($record_details !== null) {
+                        $record_details->update([
+                            'email'       => $request->email,
+                            'profile_pic' => $input['profile_pic']
+                        ]);
+                    } else {
+                        $record_details = People_detail::create([
+                            'people_id'   => $record->id,
+                            'email'       => $request->email,
+                            'profile_pic' => $input['profile_pic']
+                        ]);
+                    }
 
+                    // People_detail::updateOrCreate(
+                    //     ['people_id'    => $record->id],
+                    //     ['email'        => $request->email],
+                    //     ['profile_pic'  => $input['profile_pic']]
+                    // );
+                 
+                }else{
+                    // People_detail::updateOrCreate(
+                    //     ['people_id'    => $record->id],
+                    //     ['email'        => $request->email]
+                    // );
 
+                    // if details not exists
+                    if ($record_details !== null) {
+                        $record_details->update([
+                            'email'       => $request->email
+                        ]);
+                    } else {
+                        $record_details = People_detail::create([
+                            'people_id'   => $record->id,
+                            'email'       => $request->email,
+                        ]);
+                    }
                     
-                    $record_details->update([
-                        'email'       => $request->email,
-                        'profile_pic' => $new_name,
-                    ]);
                 }
-        
-                
-                $record_details->update([
-                    'email'       => $request->email
-                ]);
-               
-
             });
+
+            
             if(is_null($exception)) {
-                return Response::json([
-                    'status'        => "success",
-                    'msg'           => "Schedule added successfully",
-                    "data"          => [
-                                            'people_id'     => $record->id,
-                                            'fname'         => $record->fname,
-                                            'contact_no'    => $record->contact_no,
-                                            'email'         => $record_details->email,
-                                            'profile_pic'   => "/public/uploads/peoples/".($record_details->profile_pic)
-                                       ]
-                ], 200);
+                // create new token for this ID
+                
+                $record_details     = People_detail::where('people_id', $record->id)->first();
+                $token              = (isset($request->old_password)) ? $record->createToken('people-token')->plainTextToken: null;
+                $pth                = ((isset($record_details->profile_pic))) ? ( "public/uploads/peoples/".($record_details->profile_pic)) : ("public/uploads/no_image.png");
+                $email              = (isset($record_details->email)) ? ($record_details->email):"" ;
+
+                if($token != null){
+                    return Response::json([
+                        'status'        => "success",
+                        'msg'           => "Profile updated & new token generated successfully",
+                        "data"          => [
+                                                'token'         => $token,
+                                                'people_id'     => $record->id,
+                                                'fname'         => $record->fname,
+                                                'contact_no'    => $record->contact_no,
+                                                'email'         => $email,
+                                                'profile_pic'   => $pth
+                                        ]
+                    ], 200);
+
+                }else{
+                    return Response::json([
+                        'status'        => "success",
+                        'msg'           => "Profile updated successfully",
+                        "data"          => [
+                                                'people_id'     => $record->id,
+                                                'fname'         => $record->fname,
+                                                'contact_no'    => $record->contact_no,
+                                                'email'         => $email,
+                                                'profile_pic'   => $pth
+                                        ]
+                    ], 200);
+                }
             }else {
                 throw new Exception;
             }
         }
         
         catch(\Exception $e) {
-            // dd($e);
             app('App\Http\Controllers\MailController')->send_exception($e);
             return Response::json([
                 'status'    => "failed",
@@ -1214,95 +1369,100 @@ class MainController extends Controller
     }
     
     
-    
     public function store_people_vehicle(MainRequest $request)
     {
-        $record                =  People::where('contact_no', $request->contact_no)->first();
-        $record_details        =  People_vehicle::where('people_id', $record->id)->first();
-
-
-        if (!( empty($record_details)) ){
+        $people_vehicle        =  People_vehicle::where('people_id', $request->people_id)->first();
+      
+        if (( empty($people_vehicle)) ){
             return Response::json([
                 'status'    => "failed",
-                'msg'       => 'Details are already added',
+                'msg'       => 'Please complete the registration first',
                 "data"      => []
             ], 404);
         }
 
-
-        if(empty($record)){
-            return Response::json([
-                                    'status'    => "failed",
-                                    'msg'       => 'Couldn\'t find your Account.',
-                                    "data"      => []
-                                ], 404);
-        }
         
+        $rcd                = $request->all();
+
+        if( (array_key_exists("tax_pic",$rcd)) && (!empty($rcd['tax_pic']))  ){
+
+            // delete the previous image
+            if(isset($people_vehicle->tax_pic)){
+                if (file_exists( public_path('uploads/licenses/'.$people_vehicle->tax_pic) )){
+                    unlink(public_path('uploads/licenses/'.$people_vehicle->tax_pic));
+                }
+            }
+
+            // move the image to the licenses directory
+            $image                  = $request->file('tax_pic');
+            $rcd['tax_pic']       = rand().'.'.$image->getClientOriginalExtension();
+                                    $image->move(public_path("uploads/licenses"),$rcd['tax_pic']);
+
+        }
+
 
         // BEGIN::store detail in People_vehicle table
-            $req                = $request->all();
-            $req['people_id']   = $record->id;
-            $req                = People_vehicle::create($req);
+            $rcd                = People_vehicle::create($rcd);
         // END::store detail in People_vehicle table
 
         return Response::json([
                                 'status'        => "success",
-                                'msg'           => "Details added successfully",
+                                'msg'           => "vehicle added successfully",
                                 'data'          =>  [
-                                                        'people_id'            => $record->id,
-                                                        'vehicle_name'         => $record_details->vehicle_name,
-                                                        'vehicle_registration' => $record_details->vehicle_registration,
-                                                        'make'                 => $record_details->make,
-                                                        'modal'                => $record_details->modal,
-                                                        'year'                 => $record_details->year,
-                                                        'color'                => $record_details->color,
-                                                        'seat'                 => $record_details->seat
+                                                        'people_id'            => $rcd->people_id,
+                                                        'vehicle_id'           => $rcd->id,
+                                                        'vehicle_registration' => $rcd->vehicle_registration,
+                                                        'make'                 => $rcd->make,
+                                                        'modal'                => $rcd->modal,
+                                                        'car_year'             => $rcd->car_year,
+                                                        'color'                => $rcd->color,
+                                                        'seat'                 => $rcd->seat
                                                     ]
                             ], 200);
     }
 
-
-
     public function update_people_vehicle(MainRequest $request)
     {
-        $pth                    = "";
-        $input                  = $request->all();  
-        $record_details         = People_vehicle::where('id',$request->vehicle_id)->first();
+        $pth                    = "public/uploads/no_image.png";
+        $record                 = $request->all();  
+        $people_vehicle         = People_vehicle::where('id',$request->vehicle_id)->first();
 
         // if vehicle exists 
-        if(isset( $record_details->id )){
+        if(isset( $people_vehicle->id )){
             // uploading image
-            if( (array_key_exists("tax_pic",$input)) && (!empty($input['tax_pic']))  ){
+            if( (array_key_exists("tax_pic",$record)) && (!empty($record['tax_pic']))  ){
 
                 // delete the previous image
-                if($record_details->tax_pic != ""){
-                    unlink(public_path('uploads/licenses/'.$record_details->tax_pic));
+                if(isset($people_vehicle->tax_pic)){
+                    if (file_exists( public_path('uploads/licenses/'.$people_vehicle->tax_pic) )){
+                        unlink(public_path('uploads/licenses/'.$people_vehicle->tax_pic));
+                    }
                 }
 
                 // move the image to the licenses directory
-                $input['tax_pic'] = rand().'.'.$request->tax_pic->extension();  
-                $request->tax_pic->move(public_path("uploads/licenses"), $input['tax_pic']);
-                $record_details->update($input);
+                $image                  = $request->file('tax_pic');
+                $record['tax_pic']      = rand().'.'.$image->getClientOriginalExtension();
+                                          $image->move(public_path("uploads/licenses"),$record['tax_pic']);
             }
-            $record_details->update($input);
 
-            if(isset($record_details->tax_pic)){
-                $pth = "/public/uploads/licenses/".($record_details->tax_pic);  
+            $people_vehicle->update($record);
+
+            if(isset($people_vehicle->tax_pic)){
+                $pth = "public/uploads/licenses/".($people_vehicle->tax_pic);  
             }
             return Response::json([
                                     'status'        => "success",
                                     'msg'           => "Update successfully",
                                     'data'          =>  [
-                                                            'people_id'            => $record_details->people_id,
-                                                            'vehicle_name'         => $record_details->vehicle_name,
-                                                            'vehicle_registration' => $record_details->vehicle_registration,
-                                                            'make'                 => $record_details->make,
-                                                            'modal'                => $record_details->modal,
-                                                            'year'                 => $record_details->year,
-                                                            'color'                => $record_details->color,
-                                                            'seat'                 => $record_details->seat,
+                                                            'people_id'            => $people_vehicle->people_id,
+                                                            'vehicle_id'           => $people_vehicle->id,
+                                                            'vehicle_registration' => $people_vehicle->vehicle_registration,
+                                                            'make'                 => $people_vehicle->make,
+                                                            'car_year'             => $people_vehicle->car_year,
+                                                            'seat'                 => $people_vehicle->seat,
+                                                            'color'                => $people_vehicle->color,
+                                                            'modal'                => $people_vehicle->modal,
                                                             'tax_pic'              => $pth
-                                                            
                                                         ]
                                 ], 200);
 
@@ -1317,36 +1477,43 @@ class MainController extends Controller
        
     }
 
-    public function active_vehicle(MainRequest $request){
+    // public function active_vehicle(MainRequest $request){
 
         // $upd                = People_vehicle::where('bookings.active',1)
         //                         ->where('bookings.schedule_id',$request->schedule_id)
         //                         ->where('bookings.status_id','<=',3)
         //                         ->update(['status_id' =>  env('STATUS_CANCEL_ID') ]);
 
-    }
+    // }
 
 
 
     public function fetch_people_vehicle(MainRequest $request)
     {
-    
         $people_vehicles       =  People_vehicle::where('people_vehicles.people_id',$request->people_id)
                                     ->select(
                                             'id as vehicle_id',
-                                            'vehicle_name as vehicle_name',
-                                            'vehicle_registration as vehicle_registration',
-                                            'make as make_company',
-                                            'modal as car_modal',
-                                            'year as car_year',
-                                            'color as car_color',
-                                            'seat as car_seat',
+                                            'vehicle_registration',
+                                            'make',
+                                            'modal',
+                                            'car_year',
+                                            'color',
+                                            'seat',
                                             'active', // active: 1 OR active : 0
-                                            DB::raw('CONCAT("/public/uploads/licenses/", people_vehicles.tax_pic) as tax_pic')
+
+                                            DB::raw('(CASE 
+                                                WHEN isNULL(people_vehicles.tax_pic) THEN "public/uploads/no_image.png" 
+                                                ELSE CONCAT("public/uploads/licenses/",people_vehicles.tax_pic)
+                                                END) AS tax_pic'
+                                            )
+                                            
                                         )
                                     ->get();
 
         if(count($people_vehicles) > 0){
+
+            $people_vehicles = (count($people_vehicles) <=3) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
+          
             return Response::json([
                 'status'        => "success",
                 'msg'           => "vehicle fetched by people successfully",
@@ -1364,10 +1531,8 @@ class MainController extends Controller
                                 ]
             ], 200);
         }
-
         
     }
-
     
     public function logout()
     {

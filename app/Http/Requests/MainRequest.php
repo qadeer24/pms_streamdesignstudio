@@ -27,14 +27,23 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_details") ){
             $con    =   [
-                            'cnic'                    => 'required|digits:13|numeric|unique:people_details,cnic',
+                            'cnic'                    => 'required|digits:13|numeric',
                             'address'                 => 'required|min:3',
                             'license_no'              => 'required|min:3',
                             'age'                     => 'required|numeric',
+                            'make'                    => 'required',
+                            'modal'                   => 'required',
+                            'car_year'                => 'required|numeric',
+                            'color'                   => 'required',
+                            'seat'                    => 'required|numeric',
                             'dob'                     => 'required|date',
-                            'expire_date'             => 'required|date|after:dob'
+                            'expire_date'             => 'required|date|after:dob',
+                            'vehicle_registration'    => 'required',
+                            'tax_pic'                 => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
                             
                         ];
+
+            
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "verify_otp") ){
             $con    =   [
@@ -67,10 +76,10 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_schedule") ){
             $con    =   [
-                            'people_id'         => 'required|numeric',
-                            'vehicle_id'        => 'required|numeric',
+                            'people_id'         => 'required|numeric|min:1',
+                            'vehicle_id'        => 'required|numeric|min:1',
 
-                            'pickup_city_id'    => 'required|numeric',
+                            'pickup_city_id'    => 'required|numeric|min:1',
                             'pickup_lat'        => 'required|numeric',
                             'pickup_lng'        => 'required|numeric',
                             // 'pickup_address'    => 'required|min:3',
@@ -155,9 +164,10 @@ class MainRequest extends FormRequest
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_profile") ){
-            $con    =   [ 'contact_no'    => 'required|digits:11|numeric',
-                          'fname'         => 'required',
-                          'email'         => 'required',
+            $con    =   [ 
+                            'contact_no'    => 'required|digits:11|numeric',
+                            'fname'         => 'required',
+                            'email'         => 'required',
                         //   'profile_pic'   => 'required',
                         ];
 
@@ -168,23 +178,32 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_people_vehicle") ){
             $con    =   [
-                            'contact_no'            => 'required',
-                            'vehicle_name'          => 'required',
+                            'people_id'             => 'required|numeric',
                             'vehicle_registration'  => 'required',
                             'make'                  => 'required',
                             'modal'                 => 'required',
-                            'year'                  => 'required',
+                            'car_year'              => 'required',
                             'color'                 => 'required',
                             'seat'                  => 'required|numeric',
-                            'tax_pic'               => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+                            'tax_pic'               => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
                         ];
 
             
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_people_vehicle") ){
             $con    =   [ 
-                          'vehicle_id'            => 'required|numeric'
+                            'vehicle_id'            => 'required|numeric',
+                            'vehicle_registration'  => 'required',
+                            'make'                  => 'required',
+                            'modal'                 => 'required',
+                            'car_year'              => 'required',
+                            'color'                 => 'required',
+                            'seat'                  => 'required|numeric',
                         ];
+
+            if(!empty($this->tax_pic)){
+                $con['tax_pic']     = 'required|image|mimes:jpeg,png,jpg,gif|max:2048';
+            }
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_people_vehicle") ){
             $con    =   [

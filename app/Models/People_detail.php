@@ -14,20 +14,11 @@ class People_detail extends Model
     protected $dates    = ['deleted_at'];
     protected $fillable = [
         'people_id',
-        'email',
-        'cnic',
-        'address',
         'license_no',
-        'age',
         'expire_date',
-        'vehicle_registration',
-        'manufacturer',
-        'car_year',
-        'make',
-        'modal',
-        'color',
-        'seat',
-        'tax_pic',
+        'email',
+        'address',
+        'age',
         'profile_pic',
         'active'
     ];

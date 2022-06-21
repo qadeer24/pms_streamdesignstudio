@@ -13,14 +13,12 @@ class People_vehicle extends Model
     protected $dates    = ['deleted_at'];
     protected $fillable = [
         'people_id',
-        'vehicle_name',
         'vehicle_registration',
         'make',
         'modal',
-        'year',
+        'car_year',
         'color',
         'seat',
-        'cnic',
         'tax_pic',
         'active'        
     ];
