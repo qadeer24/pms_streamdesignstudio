@@ -73,10 +73,10 @@ class MainController extends Controller
        
         // if above all condition 
         // delete all previous tokens of this ID
-        $record->tokens()
-                ->where('tokenable_id', $record->id)
-                ->where('name', 'people-token')
-                ->delete();
+        // $record->tokens()
+        //         ->where('tokenable_id', $record->id)
+        //         ->where('name', 'people-token')
+        //         ->delete();
 
         // create new token for this ID
         $token      = $record->createToken('people-token')->plainTextToken;
@@ -464,9 +464,6 @@ class MainController extends Controller
            
         }
 
-       
-
-
         return Response::json([
             'status'    => $status,
             'msg'       => $msg,
@@ -527,7 +524,6 @@ class MainController extends Controller
                     $image                  = $request->file('tax_pic');
                     $input['tax_pic']       = rand().'.'.$image->getClientOriginalExtension();
                                             $image->move(public_path("uploads/licenses"),$input['tax_pic']);
-
                 }
 
                 // BEGIN::store detail in people_details table
@@ -651,15 +647,15 @@ class MainController extends Controller
 
     public function store_booking(MainRequest $request)
     {
-        $schedule                   = Schedule::where('schedules.id', $request->schedule_id)
-                                        ->leftjoin('statuses', 'statuses.id', '=', 'schedules.status_id')                                
-                                        ->select(
-                                                'schedules.id',
-                                                'schedules.status_id',
-                                                'schedules.vacant_seat',
-                                                'statuses.name as status_name',
-                                            )
-                                        ->first();
+        $schedule           = Schedule::where('schedules.id', $request->schedule_id)
+                                ->leftjoin('statuses', 'statuses.id', '=', 'schedules.status_id')                                
+                                ->select(
+                                        'schedules.id',
+                                        'schedules.status_id',
+                                        'schedules.vacant_seat',
+                                        'statuses.name as status_name',
+                                    )
+                                ->first();
 
                                        
         if ( empty($schedule) ){
@@ -678,10 +674,10 @@ class MainController extends Controller
             ], 404);
         }
 
-        $booking                    = Booking::where('schedule_id', $schedule->id)
-                                        ->where('status_id','!=', env('STATUS_CANCEL_ID')) //  cancelled
-                                        ->sum('book_seat');
-      
+        $booking            = Booking::where('schedule_id', $schedule->id)
+                                ->where('status_id','!=', env('STATUS_CANCEL_ID')) //  cancelled
+                                ->sum('book_seat');
+
         if ( (isset($schedule->vacant_seat)) && ( (($booking) >= ($schedule->vacant_seat)) || (($request->book_seat) > ($schedule->vacant_seat))  || ( ( ($request->book_seat) + ($booking) ) > ($schedule->vacant_seat) ) ) ){
             return Response::json([
                 'status'    => "failed",
@@ -741,7 +737,7 @@ class MainController extends Controller
                             ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
                             ->sum('book_seat');
                             
-                            return    $seats;
+        return    $seats;
     }
 
     function fetch_schedule_of_booking($schedule_id){
@@ -1066,21 +1062,15 @@ class MainController extends Controller
                                     )
                                 ->get();
 
-    
-                $sh = array();
-                
-                    foreach ($schedules as $key => $value) {
-                        $schdle_id  = $value->schedule_id;
-                        $bkings     = $this->count_bookings($schdle_id);
-                        
-                
-                        if( ($value->vacant_seat)  > $bkings ){
-                            array_push($sh,$value);
-                        }
-                        
-                    }
-
-
+        $sh                 = array();
+        
+        foreach ($schedules as $key => $value) {
+            $schdle_id  = $value->schedule_id;
+            $bkings     = $this->count_bookings($schdle_id);
+            if( ($value->vacant_seat)  > $bkings ){
+                array_push($sh,$value);
+            }
+        }
         
         $schedules          = $this->append_rating($sh);
         $tot_schedules      = $this->count_schedules($request->people_id);
@@ -1509,10 +1499,14 @@ class MainController extends Controller
                                             
                                         )
                                     ->get();
-
+                                    
+        if(count($people_vehicles) < 3){
+            $people_vehicles = (count($people_vehicles) <=3) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
+        }
+        
         if(count($people_vehicles) > 0){
 
-            $people_vehicles = (count($people_vehicles) <=3) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
+            // $people_vehicles = (count($people_vehicles) <=3) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
           
             return Response::json([
                 'status'        => "success",
