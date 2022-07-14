@@ -15,10 +15,12 @@ use App\Events\Message;
     Route::post("store_schedule",[MainController::class, 'store_schedule']);
     Route::post("fetch_schedules",[MainController::class, 'fetch_schedules']);
     
-    Route::post('/messages', [App\Http\Controllers\MessageController::class, 'message']);
+    Route::post('/get_recent_people', [App\Http\Controllers\MessageController::class, 'get_recent_people']);
+
+    Route::post('/send_message', [App\Http\Controllers\MessageController::class, 'send_message']);
     Route::post('/fetch_messages', [App\Http\Controllers\MessageController::class, 'fetch_messages']);
         
-
+    Route::get("get_captain_details/{captain_id}",[App\Http\Controllers\MessageController::class, 'get_captain_details']);
     Route::get("fetch_cities",[MainController::class, 'fetch_cities']);
     
     
@@ -37,7 +39,7 @@ use App\Events\Message;
     Route::post("store_details",[MainController::class, 'store_details']);  
     Route::post("fetch_people_vehicle",[MainController::class, 'fetch_people_vehicle']);
     Route::post("store_people_vehicle",[MainController::class, 'store_people_vehicle']);
-    // Route::post("update_people_vehicle",[MainController::class, 'update_people_vehicle']);
+    Route::post("update_people_vehicle",[MainController::class, 'update_people_vehicle']);
         
         
     Route::group(['middleware' => 'auth:sanctum'], function(){

@@ -2,14 +2,6 @@
 @section('title','People')
 @section('content')
     @include( '../sweet_script')
-    <style type="text/css">
-    .lightbox{
-      z-index: 1041;
-    }
-    .small-img{
-      width: 100px;height: 100px;
-    }
-  </style>
     
     <div class="page-inner">
         <h4 class="page-title">@yield('title') Profile</h4>
@@ -115,11 +107,8 @@
                 </div>
             </div>
         </div>
-
-       
         <div class="row">
-           
-            <div class="col-md-4">
+            <div class="col-lg-8 col-md-8 col-sm-12 col-xs-12">
                 <div class="card">
                     <div class="card-header">
                         <div class="d-flex align-items-center">
@@ -150,17 +139,15 @@
                                         
                                         <tr>
                                             <th width="50%">CNIC</th>
-                                            <td>{{ isset($detail->cnic) ? ($detail->cnic) :""}}</td>
+                                            <td>{{ isset($data->cnic) ? ($data->cnic) :""}}</td>
                                         </tr>
                                         <tr>
                                             <th>Contact No</th>
-                                            <td>{{ isset($detail->cnic) ? ($detail->contact_no) :""}} </td>
+                                            <td>{{ isset($data->contact_no) ? ($data->contact_no) :""}} </td>
                                         </tr>
-                                        
-                                       
                                         <tr>
                                             <th>Address</th>
-                                            <td>{{ isset($detail->cnic) ? ($detail->address) :""}}</td>
+                                            <td>{{ isset($detail->address) ? ($detail->address) :""}}</td>
                                         </tr>
                                         <br>
                                     </table>
@@ -170,87 +157,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="d-flex align-items-center">
-                            <h4 class="card-title">@yield('title') Vehicle</h4>
-                           
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col">
-                                <div class="table-responsive">
-                                    <table class="table dt-responsive">
-                                        <tr>
-                                            <th width="50%">Vehicle</th>
-                                            <td>
-                                                @if(isset($detail->manufacturer))
-                                                    {{$detail->manufacturer}}
-                                                @endif
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>Model#</th>
-                                            <td>
-                                                @if(isset($detail->modal))
-                                                    {{$detail->modal}}
-                                                @endif
-                                            </td>
-                                        </tr>
-
-                                        <tr>
-                                            <th>Vehicle#</th>
-                                            <td>
-                                                @if(isset($detail->vehicle_no))
-                                                    {{$detail->vehicle_no}}
-                                                @endif
-                                            </td>
-                                        </tr>
-
-                                        <tr>
-                                            <th>Color</th>
-                                            <td>
-                                                @if(isset($detail->color))
-                                                    {{$detail->color}}
-                                                @endif
-                                            </td>
-                                        </tr>
-
-
-                                        <tr>
-                                            <th>Seats</th>
-                                            <td>
-                                                @if(isset($detail->seat))
-                                                    {{$detail->seat}}
-                                                @endif
-                                            </td>
-                                        </tr>
-
-                                        
-                                        <!-- <tr>
-                                            <th>AC</th>
-                                            <td>
-                                                @if(isset($data->model_no))
-                                                    @if($data->ac == 0 )
-                                                        <i class="fas fa-times-circle" style="color:red;font-size:24px"></i>
-                                                    @else
-                                                        <i class="fas fa-check-circle" style="color:#4AD24E;font-size:24px"></i>
-                                                    @endif 
-                                                @endif
-                                            </td>
-                                        </tr> -->
-                                        
-                                        <br>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
+           
+            <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
                 <div class="card card-profile card-secondary">
                     <div class="card-header" style="background-image: url('../assets/img/blogpost.jpg')">
                         <div class="profile-picture">
@@ -297,14 +205,131 @@
                     </div>
                 </div>
             </div>
-           
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                       
+                        <div class="d-flex align-items-center">
+                            <h4 class="card-title">@yield('title') Vehicle(s)</h4>
+                            <span class="ml-auto">
+                                @if((isset($detail->license_no))  )
+                                <b>Driver License# <span class="badge badge-success">{{($detail->license_no)}}</span></b>
+                                @endif
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <div class="table-responsive">
+                                    <table class="table dt-responsive">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Modal#</th>
+                                            <th>Registration#</th>
+                                            <th>Color</th>
+                                            <th>Seats</th>
+                                            <th>Tax Pic</th>
+                                            <th>Status</th>
+                                        </tr>
+
+                                        @foreach($vehicles as $key => $vehicle)
+                                            <tr>
+                                                <td>{{++$key}}</td>
+                                                <td>
+                                                    @if(isset($vehicle->make))
+                                                        {{$vehicle->make}}
+                                                        @if(isset($vehicle->car_year))
+                                                            - {{$vehicle->car_year}}
+                                                        @endif
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if(isset($vehicle->modal))
+                                                        {{$vehicle->modal}}
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if(isset($vehicle->vehicle_registration))
+                                                        {{$vehicle->vehicle_registration}}
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if(isset($vehicle->color))
+                                                        {{$vehicle->color}}
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if(isset($vehicle->seat))
+                                                        {{$vehicle->seat}}
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if((isset($vehicle->tax_pic)) && (file_exists( public_path('uploads/licenses/'.$vehicle->tax_pic) )))
+                                                
+                                                        <a href="#" class="pop">
+                                                        <!-- id="imageresource" -->
+                                                            <img  src="{{ asset('/uploads/licenses/'.$vehicle->tax_pic) }}" alt="..." class="avatar-img rounded-circle imageresource"  style="width:80px; height:80px">
+                                                        
+                                                        </a>
+                                                    @else
+                                                        <img src="{{ asset('/uploads/no_image.png') }}" alt="..." class="avatar-img rounded-circle" style="width:80px; height:80px">
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="ml-auto">
+                                                        @if((isset($vehicle->active)) && ( ($vehicle->active == 1) ) )
+                                                            <i class="fas fa-check-circle" style="color:#4AD24E;font-size:24px" data-toggle="tooltip" data-placement="top" title="Active"></i>
+                                                        @else
+                                                            <i class="fas fa-times-circle" style="color:red;font-size:24px" data-toggle="tooltip" data-placement="top" title="Inactive"></i>
+                                                        @endif 
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                        <br>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Creates the bootstrap modal where the image will appear -->
+    <div class="modal fade" id="imagemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <!-- <h4 class="modal-title" id="myModalLabel">Image preview</h4> -->
+                </div>
+                <div class="modal-body">
+                    <img src="" id="imagepreview" style="width: 468px; height: 264px;" >
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+
         $(function () {
-  $('[data-toggle="tooltip"]').tooltip()
-})
-        </script>
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+        $(".pop").on("click", function() {
+            $('#imagepreview').attr('src',$(this).find(".imageresource").attr('src'));
+            $('#imagemodal').modal('show'); // imagemodal is the id attribute assigned to the bootstrap modal, then i use the show function
+        });
+
+
+    </script>
   
 @endsection

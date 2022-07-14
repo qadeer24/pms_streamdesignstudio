@@ -984,6 +984,7 @@ class MainController extends Controller
                                 ->leftjoin('cities as p_city', 'p_city.id', '=', 'schedules.pickup_city_id')
                                 ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
                                 ->select(
+                                        'schedules.captain_id',
                                         'schedules.id as schedule_id',
                                         'schedules.fare',
                                         
@@ -1037,6 +1038,7 @@ class MainController extends Controller
                                 ->leftjoin('cities as p_city', 'p_city.id', '=', 'schedules.pickup_city_id')
                                 ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
                                 ->select(
+                                        'schedules.captain_id',
                                         'schedules.id as schedule_id',
                                         'schedules.fare',
                                         'schedules.vacant_seat',

@@ -114,9 +114,12 @@
 											<div class="avatar-lg"><img src="{{ asset('/uploads/no_image.png') }}" alt="image profile" class="avatar-img rounded" ></div>
 										@endif
 										
+										<?php $editLink = "users/".Auth::user()->id ."/edit";  ?>
+										<!-- users/{{Auth::user()->id}}/edit -->
+
 										<div class="u-text">
 											<h4>{{Auth::user()->name}}</h4>
-											<p class="text-muted">{{Auth::user()->email}}</p><a href="profile.html" class="btn btn-rounded btn-danger btn-sm">View Profile</a>
+											<p class="text-muted">{{Auth::user()->email}}</p><a  href="{{ url('users')}}/{{Auth::user()->id}}/edit"class="btn btn-rounded btn-danger btn-sm">View Profile</a>
 										</div>
 									</div>
 								</li>

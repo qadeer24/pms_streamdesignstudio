@@ -137,13 +137,20 @@ class UserController extends Controller
         $data           = User::findorFail($id);
         $roles          = array();
    
-        if($id == 1){
-            $roles      = Role::where('id','=',1)->pluck('name','name')->all();
+        if($id == 1){       // user id = 1 ==> Super Admin
+            $roles      = Role::pluck('name','name')->all();
         }else{
             $roles      = Role::where('id','!=',1)->pluck('name','name')->all();
+            $userRoleId = $data->roles->pluck('id')->first();
+
+            if($userRoleId !=2){  // role id = 2 ==> Admin
+                $roles      = Role::where('id',$userRoleId)->pluck('name','name')->all();
+            }
+
         }
         
-        $userRole       = $data->roles->pluck('name','name')->all();
+   
+        $userRole        = $data->roles->pluck('name','name')->all();
 
         return view('users.edit',compact('data','roles','userRole'));
     }

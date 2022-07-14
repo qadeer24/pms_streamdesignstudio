@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use DB;
+use Auth;
 use DataTables;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
@@ -27,7 +28,14 @@ class RoleController extends Controller
 
     public function list()
     {
-        $data   = Role::get();
+        $user_id        = Auth::user()->id;
+
+   
+        if($user_id == 1){
+            $data       = Role::get();
+        }else{
+            $data       = Role::where('id','!=',1)->get();
+        }
 
         return DataTables::of($data)
                 ->addColumn('action',function($data){

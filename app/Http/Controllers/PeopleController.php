@@ -15,6 +15,7 @@ use App\Models\History;
 use App\Models\Schedule;
 use App\Models\Complaint;
 use App\Models\People_detail;
+use App\Models\People_vehicle;
 use App\Models\People_rating;
 
 use Illuminate\Http\Request;
@@ -351,6 +352,7 @@ class PeopleController extends Controller
         $data       = People::findorFail($id);
         $detail     = People_detail::where('people_id',$id)->first();
         $ratings    = round(People_rating::where('captain_id',$id)->avg('rating'));
+        $vehicles   = People_vehicle::where('people_id',$id)->get();
         $bookings   = Booking::where('passenger_id', $id)->count();
         $schedules  = Schedule::where('captain_id', $id)->count();
         $complaints = Complaint::where('captain_id', $id)->count();
@@ -360,6 +362,7 @@ class PeopleController extends Controller
                                             'data',
                                             'detail',
                                             'ratings',
+                                            'vehicles',
                                             'bookings',
                                             'schedules',
                                             'complaints',
