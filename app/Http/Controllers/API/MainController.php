@@ -28,7 +28,7 @@ class MainController extends Controller
     function login(MainRequest $request)
     {
         $record             = People::where('contact_no', $request->contact_no)->first();
-        $record_details     = People_detail::where('people_id', $record->id)->first();
+        
         // is user exist
         if(empty($record)){
             return Response::json([
@@ -47,6 +47,8 @@ class MainController extends Controller
             ], 404);
 
         }
+
+        
 
         // otp will be sent to non-verified user.
         if($record->verified != 1) {
@@ -79,20 +81,21 @@ class MainController extends Controller
         //         ->delete();
 
         // create new token for this ID
-        $token      = $record->createToken('people-token')->plainTextToken;
-        $type       = (((($record->type) =="Captain") || (($record->type) ==1))? "Captain" : "Passenger" );
-        $role       = (((($record->role) =="Captain") || (($record->role) ==1))? "Captain" : "Passenger" );
+        $token          = $record->createToken('people-token')->plainTextToken;
+        $type           = (((($record->type) =="Captain") || (($record->type) ==1))? "Captain" : "Passenger" );
+        $role           = (((($record->role) =="Captain") || (($record->role) ==1))? "Captain" : "Passenger" );
 
 
         $request->people_id =    $record->id;
 
-        $records    = (($record->role  == "Captain") || ($record->role == 1) ) ? ($this->fetch_schedules($request,true)) :($this->fetch_bookings($request,true));
-
-        $bool       = (!empty($record_details)) ? true : false;
-        $pth        = ((isset($record_details->profile_pic))) ? ( "public/uploads/licenses/".($record_details->profile_pic)) : ("public/uploads/no_image.png");
-        $people_id  = (isset($record->id)) ? ($record->id) : "";
-        $fname      = (isset($record->fname)) ? ($record->fname) : "";
-        $email      = (isset($record_details->email)) ? ($record_details->email) : "";
+        $record_details = People_detail::where('people_id', $record->id)->first();
+        $records        = (($record->role  == "Captain") || ($record->role == 1) ) ? ($this->fetch_schedules($request,true)) :($this->fetch_bookings($request,true));
+        
+        $bool           = (!empty($record_details)) ? true : false;
+        $pth            = ((isset($record_details->profile_pic))) ? ( "public/uploads/peoples/".($record_details->profile_pic)) : ("public/uploads/no_image.png");
+        $people_id      = (isset($record->id)) ? ($record->id) : "";
+        $fname          = (isset($record->fname)) ? ($record->fname) : "";
+        $email          = (isset($record_details->email)) ? ($record_details->email) : "";
 
         return Response::json([
                                 'status'        => "success",
@@ -476,9 +479,6 @@ class MainController extends Controller
     public function store_details(MainRequest $request)
     {
         $record              = People::where('cnic', $request->cnic)->first();
-        $detail              = People_detail::where('people_id', $record->id)->first();
-        $vehicle             = People_vehicle::where('people_id', $record->id)->first();
-
         if ( empty($record) ){
             return Response::json([
                 'status'    => "failed",
@@ -486,6 +486,8 @@ class MainController extends Controller
                 "data"      => []
             ], 404);
         }
+        $detail              = People_detail::where('people_id', $record->id)->first();
+        $vehicle             = People_vehicle::where('people_id', $record->id)->first();
 
         if (!( empty($detail)) ){
             return Response::json([
@@ -515,15 +517,15 @@ class MainController extends Controller
 
                     // delete the previous image
                     if(isset($vehicle->tax_pic)){
-                        if (file_exists( public_path('uploads/licenses/'.$vehicle->tax_pic) )){
-                            unlink(public_path('uploads/licenses/'.$vehicle->tax_pic));
+                        if (file_exists( public_path('uploads/taxes/'.$vehicle->tax_pic) )){
+                            unlink(public_path('uploads/taxes/'.$vehicle->tax_pic));
                         }
                     }
 
                     // move the image to the licenses directory
                     $image                  = $request->file('tax_pic');
                     $input['tax_pic']       = rand().'.'.$image->getClientOriginalExtension();
-                                            $image->move(public_path("uploads/licenses"),$input['tax_pic']);
+                                              $image->move(public_path("uploads/licenses"),$input['tax_pic']);
                 }
 
                 // BEGIN::store detail in people_details table
@@ -754,6 +756,8 @@ class MainController extends Controller
                                             'people.fname as cap_name',
                                             'people_details.profile_pic',
                                             'schedules.fare',
+                                            'people_vehicles.modal as modal',
+                                            'people_vehicles.make as make',
                                             'schedules.vacant_seat',
                                             DB::raw('CONCAT(schedules.pickup_address,  ",  ", p_city.name) as pickup_address'),
                                             DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
@@ -783,19 +787,23 @@ class MainController extends Controller
                                                 ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
                                                 ->sum('book_seat');
 
-            $bookings[$key]->vacant_seat    = (($booking->vacant_seat) -  $seats);
+            // $bookings[$key]->vacant_seat    = (($booking->vacant_seat) -  $seats);
             $bookings[$key]->rating         = round($rating);
 
             
             $schdl                          = $this->fetch_schedule_of_booking($bookings[$key]->schedule_id );
 
             $bookings[$key]->fare           = (isset($schdl->fare)) ? $schdl->fare : 0;
-            $bookings[$key]->vacant_seat    = (isset($schdl->vacant_seat)) ? $schdl->vacant_seat : 0;
+            $bookings[$key]->vacant_seat    = (isset($schdl->vacant_seat)) ? (($schdl->vacant_seat)) : 0;
+            $bookings[$key]->booked_seat    = (isset($seats)) ? ((int)$seats) : 0;
+            $bookings[$key]->remaining_seat = (isset($schdl->vacant_seat)) ? (($schdl->vacant_seat) -  $seats) : 0;
+            // $bookings[$key]->vacant_seat    = (isset($schdl->vacant_seat)) ? (($schdl->vacant_seat) -  $seats) : 0;
             $bookings[$key]->pickup_address = (isset($schdl->pickup_address)) ? $schdl->pickup_address : null;
             $bookings[$key]->dropoff_address= (isset($schdl->dropoff_address)) ? $schdl->dropoff_address : null;
-
             $bookings[$key]->cap_name       = (isset($schdl->cap_name)) ? $schdl->cap_name : null;
             $bookings[$key]->profile_pic    = (isset( $schdl->profile_pic)) ? ("public/uploads/peoples/".($schdl->profile_pic)) :( "public/uploads/no_image.png");
+            $bookings[$key]->make           = (isset($schdl->make)) ? $schdl->make : null;
+            $bookings[$key]->modal          = (isset($schdl->modal)) ? $schdl->modal : null;
 
         }
      
@@ -884,6 +892,20 @@ class MainController extends Controller
                             ], 200);
     }
     
+    function getaddress($lat,$lng)
+    {
+        $GOOGLE_API_KEY  = "AIzaSyDv_BD3VEJY5prw23hH7G1iaeoNfWdmkDk";
+
+        $url    = "https://maps.google.com/maps/api/geocode/json?key=".$GOOGLE_API_KEY."&latlng=".$lat.",".$lng."&sensor=false";
+        $json   = file_get_contents($url);
+        $data   = json_decode($json);
+
+        if(($data->status)=="OK")
+            return $data->results[0]->formatted_address;
+        else
+            return null;
+    }
+
     public function fetch_schedule_by_people(MainRequest $request)
     {
         $schedules  = Schedule::where('schedules.active',1)
@@ -896,7 +918,14 @@ class MainController extends Controller
                                 ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
                                 ->select(
                                         'schedules.id as schedule_id',
+                                        
                                         'schedules.fare',
+
+                                        'schedules.vacant_seat',
+                                        'schedules.pickup_lat',
+                                        'schedules.pickup_lng',
+                                        'schedules.dropoff_lat',
+                                        'schedules.dropoff_lng',
                                         
                                         'people.fname as cap_name',
 
@@ -912,6 +941,17 @@ class MainController extends Controller
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
                                     )
                                 ->get();
+
+        foreach ($schedules as $key => $schedule) {
+            $seats                          = Booking::where('bookings.schedule_id',$schedule->schedule_id)
+                                                ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
+                                                ->sum('book_seat');
+            $schedules[$key]->vacant_seat    = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) ) : 0;
+            $schedules[$key]->booked_seat    = (isset($seats)) ? ((int)$seats) : 0;
+            $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
+        }
+
+       
 
         $schedules          = $this->append_rating($schedules);
         $tot_schedules      = $this->count_schedules($request->people_id);
@@ -941,7 +981,7 @@ class MainController extends Controller
                                 ->select(
                                         'schedules.id as schedule_id',
                                         'schedules.fare',
-                                        
+                                        'schedules.vacant_seat',
                                         'people.fname as cap_name',
 
                                         'people_vehicles.make',
@@ -956,6 +996,15 @@ class MainController extends Controller
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
                                     )
                                 ->get();
+
+        foreach ($schedules as $key => $schedule) {
+            $seats                          = Booking::where('bookings.schedule_id',$schedule->schedule_id)
+                                                ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
+                                                ->sum('book_seat');
+            $schedules[$key]->vacant_seat    = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) ) : 0;
+            $schedules[$key]->booked_seat    = (isset($seats)) ? ((int)$seats) : 0;
+            $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
+        }
 
         $schedules          = $this->append_rating($schedules);
         $tot_schedules      = $this->count_schedules($request->people_id);
@@ -987,6 +1036,7 @@ class MainController extends Controller
                                         'schedules.captain_id',
                                         'schedules.id as schedule_id',
                                         'schedules.fare',
+                                        'schedules.vacant_seat',
                                         
                                         'people.fname as cap_name',
 
@@ -1002,6 +1052,15 @@ class MainController extends Controller
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
                                     )
                                 ->get();
+
+        foreach ($schedules as $key => $schedule) {
+            $seats                          = Booking::where('bookings.schedule_id',$schedule->schedule_id)
+                                                ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
+                                                ->sum('book_seat');
+            $schedules[$key]->vacant_seat    = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) ) : 0;
+            $schedules[$key]->booked_seat    = (isset($seats)) ? ((int)$seats) : 0;
+            $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
+        }
 
         $schedules          = $this->append_rating($schedules);
         $tot_schedules      = $this->count_schedules($request->people_id);
@@ -1072,6 +1131,15 @@ class MainController extends Controller
             if( ($value->vacant_seat)  > $bkings ){
                 array_push($sh,$value);
             }
+        }
+
+        foreach ($schedules as $key => $schedule) {
+            $seats                          = Booking::where('bookings.schedule_id',$schedule->schedule_id)
+                                                ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
+                                                ->sum('book_seat');
+            $schedules[$key]->vacant_seat    = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) ) : 0;
+            $schedules[$key]->booked_seat    = (isset($seats)) ? ((int)$seats) : 0;
+            $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
         }
         
         $schedules          = $this->append_rating($sh);
@@ -1363,9 +1431,13 @@ class MainController extends Controller
     
     public function store_people_vehicle(MainRequest $request)
     {
-        $people_vehicle        =  People_vehicle::where('people_id', $request->people_id)->first();
+
+
+        $record_details         =  People_detail::where('people_id', $request->people_id)->first();
+
+   
       
-        if (( empty($people_vehicle)) ){
+        if (( empty($record_details)) ){
             return Response::json([
                 'status'    => "failed",
                 'msg'       => 'Please complete the registration first',
@@ -1379,11 +1451,11 @@ class MainController extends Controller
         if( (array_key_exists("tax_pic",$rcd)) && (!empty($rcd['tax_pic']))  ){
 
             // delete the previous image
-            if(isset($people_vehicle->tax_pic)){
-                if (file_exists( public_path('uploads/licenses/'.$people_vehicle->tax_pic) )){
-                    unlink(public_path('uploads/licenses/'.$people_vehicle->tax_pic));
-                }
-            }
+            // if(isset($people_vehicle->tax_pic)){
+            //     if (file_exists( public_path('uploads/taxes/'.$people_vehicle->tax_pic) )){
+            //         unlink(public_path('uploads/taxes/'.$people_vehicle->tax_pic));
+            //     }
+            // }
 
             // move the image to the licenses directory
             $image                  = $request->file('tax_pic');
@@ -1426,8 +1498,8 @@ class MainController extends Controller
 
                 // delete the previous image
                 if(isset($people_vehicle->tax_pic)){
-                    if (file_exists( public_path('uploads/licenses/'.$people_vehicle->tax_pic) )){
-                        unlink(public_path('uploads/licenses/'.$people_vehicle->tax_pic));
+                    if (file_exists( public_path('uploads/taxes/'.$people_vehicle->tax_pic) )){
+                        unlink(public_path('uploads/taxes/'.$people_vehicle->tax_pic));
                     }
                 }
 
@@ -1440,7 +1512,7 @@ class MainController extends Controller
             $people_vehicle->update($record);
 
             if(isset($people_vehicle->tax_pic)){
-                $pth = "public/uploads/licenses/".($people_vehicle->tax_pic);  
+                $pth = "public/uploads/taxes/".($people_vehicle->tax_pic);  
             }
             return Response::json([
                                     'status'        => "success",
@@ -1482,7 +1554,7 @@ class MainController extends Controller
 
     public function fetch_people_vehicle(MainRequest $request)
     {
-        $people_vehicles       =  People_vehicle::where('people_vehicles.people_id',$request->people_id)
+        $people_vehicles        =  People_vehicle::where('people_vehicles.people_id',$request->people_id)
                                     ->select(
                                             'id as vehicle_id',
                                             'vehicle_registration',
@@ -1495,15 +1567,17 @@ class MainController extends Controller
 
                                             DB::raw('(CASE 
                                                 WHEN isNULL(people_vehicles.tax_pic) THEN "public/uploads/no_image.png" 
-                                                ELSE CONCAT("public/uploads/licenses/",people_vehicles.tax_pic)
+                                                ELSE CONCAT("public/uploads/taxes/",people_vehicles.tax_pic)
                                                 END) AS tax_pic'
                                             )
                                             
                                         )
                                     ->get();
+                            
+        $tot_vehicle    = (count($people_vehicles));
                                     
         if(count($people_vehicles) < 3){
-            $people_vehicles = (count($people_vehicles) <=3) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
+            $people_vehicles = (count($people_vehicles) <1) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
         }
         
         if(count($people_vehicles) > 0){
@@ -1514,6 +1588,7 @@ class MainController extends Controller
                 'status'        => "success",
                 'msg'           => "vehicle fetched by people successfully",
                 'data'          => [
+                                        'tot_vehicle'     => $tot_vehicle,
                                         'people_vehicles' =>  $people_vehicles 
                                 ]
             ], 200);
