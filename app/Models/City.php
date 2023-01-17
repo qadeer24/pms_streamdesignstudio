@@ -42,7 +42,7 @@ class City extends Model
                     ->select(
                                 'city_id',
                                 'id as area_id',
-                                'name as area_name',
+                                'name as value',
                                 // 'lat as area_lat',
                                 // 'lng as area_lng'
                             )
