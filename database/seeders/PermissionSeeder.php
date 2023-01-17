@@ -63,7 +63,17 @@ class PermissionSeeder extends Seeder
             'status-list',
             'status-create',
             'status-edit',
-            'status-delete'
+            'status-delete',
+
+            'area-list',
+            'area-create',
+            'area-edit',
+            'area-delete',
+
+            'chat-list',
+            'chat-create',
+            'chat-edit',
+            'chat-delete'
 
          ];
          foreach ($permissions as $permission) {

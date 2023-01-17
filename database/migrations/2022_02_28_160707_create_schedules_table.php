@@ -20,12 +20,14 @@ class CreateSchedulesTable extends Migration
             $table->unsignedInteger('vehicle_id')->comment('people_vehicles'); 
 
             $table->unsignedInteger('pickup_city_id');
+            $table->unsignedInteger('pickup_area_id')->nullable();
             $table->string('pickup_lat')->nullable();
             $table->string('pickup_lng')->nullable();
             $table->text('pickup_address')->nullable();
             // $table->time('pickup_time')->nullable();
 
             $table->unsignedInteger('dropoff_city_id');
+            $table->unsignedInteger('dropoff_area_id')->nullable();
             $table->string('dropoff_lat')->nullable();
             $table->string('dropoff_lng')->nullable();
             $table->text('dropoff_address')->nullable();

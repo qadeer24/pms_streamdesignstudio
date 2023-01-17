@@ -34,4 +34,22 @@ class City extends Model
     {
         return $this->belongsTo(Province::class, 'province_id', 'id');
     }
+
+    public function areas($city_id)
+    {
+        return  Area::orderBy('city_id')
+                    ->where('city_id', $city_id)
+                    ->select(
+                                'city_id',
+                                'id as area_id',
+                                'name as area_name',
+                                // 'lat as area_lat',
+                                // 'lng as area_lng'
+                            )
+                    ->where('active',1)
+                    ->get();
+
+
+
+    }
 }

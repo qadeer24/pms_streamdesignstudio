@@ -193,6 +193,13 @@
 							</a>
 						</li>
 
+						<li class="nav-item @if('chats' == url_explode(request()->path()) ) {{'active'}} @endif">
+							<a  href="{{url('/chats')}}">
+								<i class="fas fa-envelope"></i>
+								<p>Chats</p>
+							</a>
+						</li>
+
 						<li class="nav-item @if('peoples' == url_explode(request()->path()) ) {{'active'}} @endif">
 							<a  href="{{url('/peoples')}}">
 								<i class="fas fa-users"></i>
@@ -215,6 +222,14 @@
 								<p>Ratings</p>
 							</a>
 						</li>
+
+						<li class="nav-item @if('areas' == url_explode(request()->path()) ) {{'active'}} @endif">
+							<a  href="{{url('/areas')}}">
+								<i class="fas fa-building"></i>
+								<p>Areas</p>
+							</a>
+						</li>
+
 
 
 

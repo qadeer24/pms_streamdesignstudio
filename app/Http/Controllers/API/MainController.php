@@ -5,6 +5,7 @@ use DB;
 use Response;
 use Validator;
 use Exception;
+use App\Models\Area;
 use App\Models\City;
 use App\Models\People;
 use App\Models\Rating;
@@ -1198,41 +1199,30 @@ class MainController extends Controller
 
     public function fetch_provinces()
     {
+        $records        = array();
+        $all_records    = array();
+
         $provinces      = Province::orderBy('id')
-                            ->select(
-                                        'id as province_id',
-                                        'name as province_name'
-                                    )
+                            ->select('id','name')
                             ->where('active',1)
                             ->get();
-
-        $cities         = City::orderBy('province_id')
-                            ->select(
-                                        'province_id',
-                                        'id as city_id',
-                                        'name as city_name',
-                                        'lat as city_lat',
-                                        'lng as city_lng'
-                                    )
-                            ->where('active',1)
-                            ->get();
-
 
         foreach ($provinces as $key => $province) {
-            $cts        = [];
-            foreach ($cities as $k => $city) {
-                if($city->province_id == $province->province_id){
-                    array_push($cts, $city);
-                }
-            }
-            $provinces[$key]->cities = $cts;
+            $records            = (object) array(
+                                    "province_id"       => ((isset($province->id)) ? $province->id : "" ),
+                                    "province_name"     => ((isset($province->name)) ? $province->name : "" ),
+                                    "cities"            => $province->cities($province->id)
+                                    
+                                );
+
+            array_push($all_records, $records);
         }
 
         return Response::json([
                                 'status'        => "success",
                                 'msg'           => "Provinces fetched successfully",
                                 "data"          => [
-                                                    'provinces' =>  $provinces
+                                                    'provinces' =>  $all_records
                                                 ]
                             ], 200);
     }

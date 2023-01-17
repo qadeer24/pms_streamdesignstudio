@@ -15,7 +15,8 @@ class DatabaseSeeder extends Seeder
             RatingSeeder::class,
             ReasonSeeder::class,
             StatusSeeder::class,
-            ProvinceSeeder::class
+            ProvinceSeeder::class,
+            AreaSeeder::class
         ]);
     }
 }

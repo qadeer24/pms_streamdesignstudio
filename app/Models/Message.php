@@ -27,4 +27,16 @@ class Message extends Model
     {
         return ucwords($value);
     }
+
+    
+    public function sender()
+    {
+        return $this->belongsTo(People::class, 'sender_id', 'id');
+    }
+
+    
+    public function receiver()
+    {
+        return $this->belongsTo(People::class, 'receiver_id', 'id');
+    }
 }

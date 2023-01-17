@@ -1,6 +1,7 @@
 <?php
 
 	use Illuminate\Support\Facades\Route;
+	use App\Http\Controllers\AreaController;
 	use App\Http\Controllers\UserController;
 	use App\Http\Controllers\RoleController;
 	use App\Http\Controllers\CityController;
@@ -16,7 +17,8 @@
 	use App\Http\Controllers\PermissionController;
 	use App\Http\Controllers\Complaint_tagController;
 	use App\Http\Controllers\Payment_methodController;
-
+	use App\Http\Controllers\ChatController;
+	
 	Auth::routes();
 
 	Route::get('/', function () {
@@ -54,6 +56,13 @@
 			Route::get('/bkngs_lst/{id}', [PeopleController::class, 'bookings_lst']);
 		});
 
+		
+	// BEGIN::Rating
+		Route::resource('/chats', ChatController::class);
+		Route::get('/lst_chat', [ChatController::class, 'list']);
+		Route::delete('/del_chat', [ChatController::class, 'destroy']);
+	// BEGIN::Rating
+
 	
 	// BEGIN::Rating
 		Route::resource('/ratings', RatingController::class);
@@ -74,6 +83,12 @@
 		Route::get('/lst_city', [CityController::class, 'list']);
 		Route::delete('/del_city', [CityController::class, 'destroy']);
 	// END::city
+
+	// BEGIN::area
+		Route::resource('/areas', AreaController::class);
+		Route::get('/lst_area', [AreaController::class, 'list']);
+		Route::delete('/del_area', [AreaController::class, 'destroy']);
+	// END::area
 
 	// BEGIN::reasons
 		Route::resource('/reasons', ReasonController::class);

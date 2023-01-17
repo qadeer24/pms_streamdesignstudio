@@ -17,6 +17,8 @@ class MessageRequest extends FormRequest
     public function rules()
     {
         return [
+            
+            'sender_name' => 'required',
             'message'     => 'required',
             'sender_id'   => 'required|numeric',
             'receiver_id' => 'required|numeric'
@@ -36,8 +38,9 @@ class MessageRequest extends FormRequest
     {
         return [
             'message.required'     => 'Message is required',
-            'sender_id.required'   => 'Sender is required',
-            'receiver_id.required' => 'Receiver is required'
+            'sender_name.required' => 'Sender name  is required',
+            'sender_id.required'   => 'Sender Id is required',
+            'receiver_id.required' => 'Receiver Id is required'
         ];
     }
 }

@@ -80,11 +80,13 @@ class MainRequest extends FormRequest
                             'vehicle_id'        => 'required|numeric|min:1',
 
                             'pickup_city_id'    => 'required|numeric|min:1',
+                            'pickup_area_id'    => 'required|numeric|min:1',
                             // 'pickup_lat'        => 'required|numeric',
                             // 'pickup_lng'        => 'required|numeric',
                             'pickup_address'    => 'required|min:3',
 
                             'dropoff_city_id'   => 'required|numeric',
+                            'dropoff_area_id'   => 'required|numeric|min:1',
                             // 'dropoff_lat'       => 'required|numeric',
                             // 'dropoff_lng'       => 'required|numeric',
                             'dropoff_address'   => 'required|min:3',

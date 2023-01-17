@@ -17,11 +17,13 @@ class Schedule extends Model
         'vehicle_id',
 
         'pickup_city_id',
+        'pickup_area_id',
         'pickup_lat',
         'pickup_lng',
         'pickup_address',
 
         'dropoff_city_id',
+        'dropoff_area_id',
         'dropoff_lat',
         'dropoff_lng',
         'dropoff_address',
