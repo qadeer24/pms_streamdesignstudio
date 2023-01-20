@@ -63,10 +63,6 @@ class AreaController extends Controller
     {
 
         $cities        = City::pluck('name','id')->all();
-        $cities        = City::pluck('name','id')->all();
-        $cities        = City::pluck('name','id')->all();
-        $cities        = City::pluck('name','id')->all();
-
         //test
         return view('areas.create',compact('cities'));
     }
