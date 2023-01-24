@@ -26,241 +26,35 @@ use App\Http\Controllers\NotificationController;
 
 class MainController extends Controller
 {
-    function login(MainRequest $request)
+
+    private function returnResponse($status,$msg,$data, $code) // done
     {
-        $record             = People::where('contact_no', $request->contact_no)->first();
-        
-        // is user exist
-        if(empty($record)){
-            return Response::json([
-                                    'status'    => "failed",
-                                    'msg'       => 'Couldn\'t find your Account.',
-                                    "data"      => []
-                                ], 404);
-        }
-
-        // checking password
-        if(!(Hash::check($request->password, $record->password))) {
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Invalid password',
-                "data"      => []
-            ], 404);
-
-        }
-
-        
-
-        // otp will be sent to non-verified user.
-        if($record->verified != 1) {
-       
-            $input['otp']        = rand(1000, 9999);
-            $input['temp_code']  = rand(1000000000, 9999999999);
-                                    $record->update($input);
-            // appending +92 with contact_no
-            $cno = $this->set_contact_no($request->contact_no);
-
-            // send sms using Twilio
-            // (new TwilioSMSController)->index($cno, $input['otp']);
-            (new NotificationController)->send_otp($cno, $input['otp']);
-            
-            return Response::json([
-                                    'status'        => "success",
-                                    'msg'           => "OTP sent",
-                                    'data'          =>  [
-                                                            'temp_code' =>$input['temp_code']
-                                                        ]
-                                ], 200);
-
-        }
-       
-        // if above all condition 
-        // delete all previous tokens of this ID
-        // $record->tokens()
-        //         ->where('tokenable_id', $record->id)
-        //         ->where('name', 'people-token')
-        //         ->delete();
-
-        // create new token for this ID
-        $token          = $record->createToken('people-token')->plainTextToken;
-        $type           = (((($record->type) =="Captain") || (($record->type) ==1))? "Captain" : "Passenger" );
-        $role           = (((($record->role) =="Captain") || (($record->role) ==1))? "Captain" : "Passenger" );
-
-
-        $request->people_id =    $record->id;
-
-        $record_details = People_detail::where('people_id', $record->id)->first();
-        $records        = (($record->role  == "Captain") || ($record->role == 1) ) ? ($this->fetch_schedules($request,true)) :($this->fetch_bookings($request,true));
-        
-        $bool           = (!empty($record_details)) ? true : false;
-        $pth            = ((isset($record_details->profile_pic))) ? ( "public/uploads/peoples/".($record_details->profile_pic)) : ("public/uploads/no_image.png");
-        $people_id      = (isset($record->id)) ? ($record->id) : "";
-        $fname          = (isset($record->fname)) ? ($record->fname) : "";
-        $email          = (isset($record_details->email)) ? ($record_details->email) : "";
-
         return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Logged in successfully",
-                                'data'          =>  [
-                                                        'token'                 => $token,
-                                                        'fname'                 => $fname,
-                                                        'email'                 => $email ,
-                                                        'profile_pic'           => $pth,
-                                                        'people_id'             => $people_id,
-                                                        'type'                  => $type,
-                                                        'role'                  => $role, // toggle role in app
-                                                        'records'               => $records,
-                                                        'registration_complete' => $bool
-                                                    ]
-                               
-                            ], 200);
-
+            'status'    => $status,
+            'msg'       => $msg,
+            "data"      => $data
+        ], $code);
     }
 
-    public function verify_otp(MainRequest $request)
+    private function set_contact_no($cno) // done
     {
-        $record     = People::where('otp', $request->otp)
-                            ->where('temp_code', $request->temp_code)
-                            ->whereNull('forgot')
-                            ->first();
-                            
-        if ( (empty($record))  || $record->otp == null  ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Invalid OTP',
-                "data"      => []
-            ], 404);
-        }
-        
-        $input               = array();
-        $input['otp']        = null;
-        $input['verified']   = 1;
-        $input['temp_code']  = null;
-
-        $record->update($input);
-
-        return Response::json([
-                            'status'        => "success",
-                            'msg'           => "OTP verified",
-                            "data"          => []
-                        ], 200);
-
-    }
-
-    // send_reset_otp
-    public function forgot(MainRequest $request)
-    {
-        $record             = People::where('contact_no', $request->contact_no)->first();
-
-        if ( empty($record)){
-            return Response::json([
-                                    'status'    => "failed",
-                                    'msg'       => 'Invalid contact number',
-                                    "data"      => []
-                                ], 404);
-        }
-
-       // otp will be sent to non-verified user.
-       $input['temp_code']  = rand(1000000000, 9999999999);
-       $input['otp']        = rand(1000, 9999);
-       $input['forgot']     = 1;
-                              $record->update($input);
-
-       // appending +92 with contact_no
-       $cno = $this->set_contact_no($request->contact_no);
-
-       // send sms using Twilio
-       // (new TwilioSMSController)->index($cno, $input['otp']);
-       (new NotificationController)->send_otp($cno, $input['otp']);
-       
-       return Response::json([
-                               'status'        => "success",
-                               'msg'           => "OTP sent",
-                               "data"          => [
-                                                    'temp_code' =>  $input['temp_code'],
-                                                    'name'      => "forgot"
-                                                ]
-                            ], 200);
-    }
-
-    // store_reset_otp
-    public function forgot_otp(MainRequest $request)
-    {
-        $record     = People::where('otp', $request->otp)
-                            ->where('temp_code', $request->temp_code)
-                            ->whereNotNull('forgot')
-                            ->first();
-
-        if ( empty($record)){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Invalid OTP',
-                "data"      => []
-            ], 404);
-        }
-
-        $input               = array();
-        $input['otp']        = null;
-        $input['verified']   = 1;
-        $input['forgot']     = null;
-        $input['temp_code']  = rand(1000000000, 9999999999);
-
-        $record->update($input);
-
-        return Response::json([
-                            'status'        => "success",
-                            'msg'           => "Forgot OTP verified",
-                            "data"          => [
-                                                'temp_code' =>  $input['temp_code'],
-                                                'name'      => "forgot_otp"
-                                            ]
-                        ], 200);
-
-    }
-
-    public function update_password(MainRequest $request)
-    {
-        $record     = People::where('temp_code', $request->temp_code)->first();
-
-        if ( empty($record)){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Couldn\'t find your Account.',
-                "data"      => []
-            ], 404);
-        }
-
-        $input               = array();
-        $input['otp']        = null;
-        $input['verified']   = 1;
-        $input['password']   = Hash::make($request->password);
-        $input['temp_code']  = null;
-
-        $record->update($input);
-
-        return Response::json([
-                            'status'        => "success",
-                            'msg'           => "Password reset",
-                            "data"          => []
-                        ], 200);
-
-    }
-
-    public function set_contact_no($cno){
         if($cno[0] == "0"){
             $cno = "+92".(ltrim($cno, "0"));
         }
         return $cno;
     }
 
-    public function register(MainRequest $request)
+    public function register(MainRequest $request) // done
     {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "register")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+        $input               = $request->all();
         $otp                 = rand(1000, 9999);
         $temp_code           = rand(100000000, 999999999);
         $record              = People::where('contact_no', $request->contact_no)->first();
 
         if ( empty($record)){
-            $input               = $request->all();
             $input['otp']        = $otp;
             $input['temp_code']  = $temp_code;
             $input['fname']      = ucwords($input['fname']);
@@ -279,63 +73,698 @@ class MainController extends Controller
         // send sms using Twilio
         // (new TwilioSMSController)->index($cno, $otp);
         (new NotificationController)->send_otp($cno, $otp);
-        
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "OTP sent",
-                                'data'          =>  [
-                                                        'temp_code' => $temp_code
-                                                    ]
-                            ], 200);
-                            
+
+        $data               = array();
+        $data['temp_code']  = $temp_code;
+        return $this->returnResponse("success","OTP sent.",$data, 200);
        
     }
 
-    public function append_rating($schedules){
-       
-        foreach ($schedules as $key => $schedule) {
-            $rating                     = People_rating::where('people_ratings.schedule_id',$schedule->schedule_id)->avg('people_ratings.rating');
-            $schedules[$key]->rating    = round($rating);
+    public function login(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "login")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
         }
 
-        return $schedules;
+        $record             = People::where('contact_no', $request->contact_no)->first();
+        
+        // checking password
+        if(!(Hash::check($request->password, $record->password))) {
+            return $this->returnResponse("failed","Validation errors",["Invalid password."], 404);
+        }
+
+
+        // otp will be sent to non-verified user.
+        if($record->verified != 1) {
+       
+            $input['otp']        = rand(1000, 9999);
+            $input['temp_code']  = rand(1000000000, 9999999999);
+                                   $record->update($input);
+            // appending +92 with contact_no
+            $cno = $this->set_contact_no($request->contact_no);
+
+            // send sms using Twilio
+            // (new TwilioSMSController)->index($cno, $input['otp']);
+            (new NotificationController)->send_otp($cno, $input['otp']);
+            
+            $data               = array();
+            $data['temp_code']  = $input['temp_code'];
+            return $this->returnResponse("success","OTP sent.",$data, 200);
+        }
+       
+        // if above all condition 
+        // delete all previous tokens of this ID
+        // $record->tokens()
+        //         ->where('tokenable_id', $record->id)
+        //         ->where('name', 'people-token')
+        //         ->delete();
+
+
+        $data  = $this->return_login($request, $record);
+        return $this->returnResponse("success","Logged in successfully.",$data, 200);
+       
+
     }
 
-    public function cancel_booking(MainRequest $request)
+    private function return_login($request, $record) // done
     {
+        $data                          = array();
+        $request->people_id            = $record->id;
+        $record_details                = People_detail::where('people_id', $record->id)->first();
+        $data['token']                 = $record->createToken('people-token')->plainTextToken;
+        $data['fname']                 = (isset($record->fname)) ? ($record->fname) : "";
+        $data['email']                 = (isset($record_details->email)) ? ($record_details->email) : "";
+        $data['profile_pic']           = ((isset($record_details->profile_pic))) ? ( "public/uploads/peoples/".($record_details->profile_pic)) : ("public/uploads/no_image.png");
+        $data['people_id']             = (isset($record->id)) ? ($record->id) : "";
+        $data['type']                  = (((($record->type) =="Captain") || (($record->type) ==1))? "Captain" : "Passenger" );
+        $data['role']                  = (((($record->role) =="Captain") || (($record->role) ==1))? "Captain" : "Passenger" ); // toggle role in app;
+        $data['records']               = (($record->role  == "Captain") || ($record->role == 1) ) ? ($this->fetch_schedules($request,true)) :($this->fetch_bookings($request,true));
+        $data['registration_complete'] = (!empty($record_details)) ? true : false;
+        return $data;
+    }
 
-        $record             = Booking::where('bookings.active',1)
-                                ->where('bookings.passenger_id',$request->people_id)
-                                ->where('bookings.id',$request->booking_id)
-                                ->where('bookings.status_id','<=',3)
-                                ->first();
-                                
-                        
-        // is booking exist
-        if(empty($record)){
-            return Response::json([
-                                    'status'    => "failed",
-                                    'msg'       => 'No booking found.',
-                                    "data"      => []
-                                ], 404);
+    public function verify_otp(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "verify_otp")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+        
+        ////// BEGIN :: un-comment when OTP apis purchased //////
+        /* $record     = People::where('otp', $request->otp)
+                            ->where('temp_code', $request->temp_code)
+                            ->whereNull('forgot')
+                            ->first();
+                            
+        if ( (empty($record))  || $record->otp == null  ){
+            return $this->returnResponse("failed","Validation errors",["Invalid OTP."], 404);
+        } */
+        ////// END :: un-comment when OTP apis purchased //////
+
+        $record     = People::where('temp_code', $request->temp_code)
+                            ->whereNull('forgot')
+                            ->first();
+
+        if ( (!isset($record->id)) ){
+            return $this->returnResponse("failed","Validation errors",["Invalid OTP."], 404);
+        } 
+        
+        $data               = array();
+        $data['otp']        = null;
+        $data['verified']   = 1;
+        $data['temp_code']  = null;
+        $record->update($data);
+        return $this->returnResponse("success","OTP verified.",[], 200);
+    }
+
+    // send_reset_otp
+    public function forgot(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "forgot")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+        $record             = People::where('contact_no', $request->contact_no)->first();
+
+       // otp will be sent to non-verified user.
+       $input['temp_code']  = rand(1000000000, 9999999999);
+       $input['otp']        = rand(1000, 9999);
+       $input['forgot']     = 1;
+                              $record->update($input);
+
+       // appending +92 with contact_no
+       $cno = $this->set_contact_no($request->contact_no);
+
+       // send sms using Twilio
+       // (new TwilioSMSController)->index($cno, $input['otp']);
+       (new NotificationController)->send_otp($cno, $input['otp']);
+
+       $data              = array();
+       $data['temp_code'] = $input['temp_code'];
+       $data['name']      = "forgot";
+
+       return $this->returnResponse("success","OTP sent.",$data, 200);
+    }
+
+    // store_reset_otp and return temp_code for update password
+    public function forgot_otp(MainRequest $request)  // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "forgot_otp")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        ////// BEGIN :: un-comment when OTP apis purchased //////
+        /* $record     = People::where('otp', $request->otp)
+                            ->where('temp_code', $request->temp_code)
+                            ->whereNotNull('forgot')
+                            ->first();
+                            
+        if ( (empty($record))  || ($record->otp == null)  || (!(isset($record->id))) ){
+            return $this->returnResponse("failed","Validation errors",["Invalid OTP."], 404);
+        } */
+        ////// END :: un-comment when OTP apis purchased //////
+
+        $record     = People::where('temp_code', $request->temp_code)
+                            ->whereNotNull('forgot')
+                            ->first();
+
+                            // dd($record);
+                            
+        if(!isset($record->id)){
+            return $this->returnResponse("failed","Validation errors",["Invalid OTP."], 404);
+        } 
+
+        $input               = array();
+        $input['otp']        = null;
+        $input['verified']   = 1;
+        $input['forgot']     = null;
+        $input['temp_code']  = rand(1000000000, 9999999999);
+
+        $record->update($input);
+
+        $data              = array();
+        $data['temp_code'] = $input['temp_code'];
+        $data['name']      = "forgot_otp";
+ 
+        return $this->returnResponse("success","Forgot OTP verified.",$data, 200);
+    }
+
+    // update_password
+    public function update_password(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "update_password")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+        $record              = People::where('temp_code', $request->temp_code)->first();
+        $input               = array();
+        $input['otp']        = null;
+        $input['verified']   = 1;
+        $input['password']   = Hash::make($request->password);
+        $input['temp_code']  = null;
+
+        $record->update($input);
+
+        return $this->returnResponse("success","Password reset.",[], 200);
+    }
+
+    // toggle_role
+    public function toggle_role(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "toggle_role")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        $msg                 = "";
+        $data                = [];
+        $code                = 404;
+        $status              = "failed";
+
+        $record              = People::where('id', $request->people_id)->first();
+      
+        if(($record->type  != "Captain") && ((ucfirst($request->role)) == "Captain") ){
+            $msg              = "Passenger can't be toggled to captain";
+
+        }else if(( (ucfirst(strtolower($request->role))) != "Passenger")  && ((ucfirst(strtolower($request->role))) != "Captain")){
+            $msg              = "Invalid toggle value!";
+
+        }else{
+            // BEGIN::update role of people from passenger to captain or vice versa
+                $rec['role'] = ((((ucfirst(strtolower($request->role)))) == "Passenger") ? 0 : 1 ); // 1: captain and 0: passenger
+                $record->update($rec);
+            // END::update role of people from passenger to captain or vice versa
+
+            if( $rec['role'] == 1 ){
+                $records    = $this->fetch_schedules($request,true);
+            }else{
+                $records    = $this->fetch_bookings($request,true);
+            }
+            
+            $msg                 = "Role toggled successfully";
+            $status              = "success";
+            $code                = 200;
+            $data                = ['records' => $records];
+           
+        }
+
+        return $this->returnResponse("success",$msg,$data, $code);
+
+    }
+
+    // store people detail to become captain
+    public function store_details(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "store_details")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        $record              = People::where('cnic', $request->cnic)->first();
+        $detail              = People_detail::where('people_id', $record->id)->first();
+        $vehicle             = People_vehicle::where('people_id', $record->id)->first();
+
+        if (isset($detail->id) ){
+            return $this->returnResponse("failed","Validation errors",["Details are already added."], 404);
         }
 
         try {
             // Transaction
-            $exception = DB::transaction(function()  use ($request,$record) {
+            $exception = DB::transaction(function()  use ($request,$record,$detail,$vehicle) {
 
-                // BEGIN::update schedule to cancel
-                    $input                      = $request->all();
-                    $input['status_id']         = env('STATUS_CANCEL_ID'); 
-                                                  $record->update($input);
-                // END::update schedule to cancel
+                // BEGIN::update type of people from passenger to captain to create the ride
+                    $rec['type']         = 1; // 1: captain and 0: passenger
+                    $rec['role']         = 1; // 1: captain and 0: passenger
+                    $record->update($rec);
+                // END::update type of people from passenger to captain to create the ride
 
-                $this->store_history($request->people_id,0,$record->schedule_id,$request->booking_id,null,env('STATUS_CANCEL_ID'));
+                // BEGIN::store detail in people_details table
+                    $input                = $request->all();
+                    $input['people_id']   = $record->id;
+                    $rec                  = People_detail::create($input);
+                // END::store detail in people_details table
+
+                if( (array_key_exists("tax_pic",$input)) && (!empty($input['tax_pic']))  ){
+
+                    // delete the previous image
+                    if(isset($vehicle->tax_pic)){
+                        if (file_exists( public_path('uploads/taxes/'.$vehicle->tax_pic) )){
+                            unlink(public_path('uploads/taxes/'.$vehicle->tax_pic));
+                        }
+                    }
+
+                    // move the image to the taxes directory
+                    $image                  = $request->file('tax_pic');
+                    $input['tax_pic']       = rand().'.'.$image->getClientOriginalExtension();
+                                              $image->move(public_path("uploads/taxes"),$input['tax_pic']);
+                }
+
+                // BEGIN::store detail in people_details table
+                    $rec                = People_vehicle::create($input);
+                // END::store detail in people_details table
+
+            });
+
+                
+            if(is_null($exception)) {
+
+                $vehicle    = People_vehicle::where('people_id', $record->id)->first();
+                $vehicle_id = (isset($vehicle->id))? ($vehicle->id) :null ; 
+
+                $data       = array([
+                                        'fname'         => $record->fname,
+                                        'people_id'     => $record->id,
+                                        'type'          => "Captain",
+                                        'vehicle_id'    => $vehicle_id
+                                    ]);
+
+                return $this->returnResponse("success","Details added successfully.",$data, 200);
+              
+            }else {
+                throw new Exception;
+            }
+        }
+        
+        catch(\Exception $e) {
+            app('App\Http\Controllers\MailController')->send_exception($e);
+            return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
+
+        }
+    }
+    
+    // fetch provinces alongwith cities
+    public function fetch_provinces() // done
+    {
+
+        $records        = array();
+        $all_records    = array();
+
+        $provinces      = Province::orderBy('id')
+                            ->select('id','name')
+                            ->where('active',1)
+                            ->get();
+
+        foreach ($provinces as $key => $province) {
+            $records            = (object) array(
+                                    "province_id"       => ((isset($province->id)) ? $province->id : "" ),
+                                    "province_name"     => ((isset($province->name)) ? $province->name : "" ),
+                                    "cities"            => $province->cities($province->id)
+                                );
+
+            array_push($all_records, $records);
+        }
+
+        $data   = array(['provinces' =>  $all_records]);
+        return $this->returnResponse("success","Provinces fetched successfully.",$data, 200);
+
+    }
+    
+    // fetch cities only
+    public function fetch_cities() // done
+    {
+        $record     = City::select('id','name','lat','lng')->where('active',1)->get()->toArray();
+        $data       = array(['cities' =>  $record]);
+
+        return $this->returnResponse("success","Cities fetched successfully.",$data, 200);
+    }
+
+    // update profile :: updating all people profile inputs
+    public function update_profile(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "update_profile")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        $token              = null;
+        $record             = People::where('contact_no', $request->contact_no)->first();
+        $record_details     = People_detail::where('people_id', $record->id)->first();
+
+        // BEGIN :: checking is password valid 
+        if(isset($request->old_password)){
+
+            if(!(isset($request->new_password))){
+                return $this->returnResponse("failed","Validation errors",["Please enter new password."], 404);
+            }
+
+            if(!(Hash::check($request->old_password, $record->password))) {
+                return $this->returnResponse("failed","Validation errors",["Invalid password."], 404);
+            }
+        }
+
+        // END :: checking is password valid 
+
+
+        try {
+            // Transaction
+            $exception = DB::transaction(function()  use ($request,$record,$record_details,$token) {
+          
+                // update profile with or without password 
+                if(isset($request->old_password)){
+                
+                    // update fname and password
+                    $record->update([
+                        'fname'      => $request->fname,
+                        'password'   => Hash::make($request->new_password),
+                    ]);
+                    
+                   
+                    // delete all previous tokens of this ID
+                    $record->tokens()
+                        ->where('tokenable_id', $record->id)
+                        ->where('name', 'people-token')
+                        ->delete();
+
+                }else{
+                    $record->update(['fname'  => ($request->fname)]);
+                }
+      
+                // input variables 
+                $req                = $request->all();
+                $input              = $request->all();   
+                $req['people_id']   = $record->id;
+
+                // BEING :: uploading image
+                if( (array_key_exists("profile_pic",$input)) && (!empty($input['profile_pic']))  ){
+        
+                    // delete the previous image
+                    if(isset($record_details->profile_pic)){
+                        if (file_exists( public_path('uploads/peoples/'.$record_details->profile_pic) )){
+                            unlink(public_path('uploads/peoples/'.$record_details->profile_pic));
+                        }
+                    }
+
+                    $image                  = $request->file('profile_pic');
+                    $input['profile_pic']   = rand().'.'.$image->getClientOriginalExtension();
+                                              $image->move(public_path("uploads/peoples"),$input['profile_pic']);
+        
+
+                    // if details not exists
+                    if ($record_details !== null) {
+                        $record_details->update([
+                            'email'       => $request->email,
+                            'profile_pic' => $input['profile_pic']
+                        ]);
+                    } else {
+                        $record_details = People_detail::create([
+                            'people_id'   => $record->id,
+                            'email'       => $request->email,
+                            'profile_pic' => $input['profile_pic']
+                        ]);
+                    }
+
+                    // People_detail::updateOrCreate(
+                    //     ['people_id'    => $record->id],
+                    //     ['email'        => $request->email],
+                    //     ['profile_pic'  => $input['profile_pic']]
+                    // );
+                 
+                }else{
+                    // People_detail::updateOrCreate(
+                    //     ['people_id'    => $record->id],
+                    //     ['email'        => $request->email]
+                    // );
+
+                    // if details not exists
+                    if ($record_details !== null) {
+                        $record_details->update([
+                            'email'       => $request->email
+                        ]);
+                    } else {
+                        $record_details = People_detail::create([
+                            'people_id'   => $record->id,
+                            'email'       => $request->email,
+                        ]);
+                    }
+                    
+                }
+            });
+
+            
+            if(is_null($exception)) {
+                // create new token for this ID
+                
+                $record_details     = People_detail::where('people_id', $record->id)->first();
+                $token              = (isset($request->old_password)) ? $record->createToken('people-token')->plainTextToken: null;
+                $pth                = ((isset($record_details->profile_pic))) ? ( "public/uploads/peoples/".($record_details->profile_pic)) : ("public/uploads/no_image.png");
+                $email              = (isset($record_details->email)) ? ($record_details->email):"" ;
+
+                if($token != null){
+
+                    $data   = array([
+                                        'token'         => $token,
+                                        'people_id'     => $record->id,
+                                        'fname'         => $record->fname,
+                                        'contact_no'    => $record->contact_no,
+                                        'email'         => $email,
+                                        'profile_pic'   => $pth
+                                    ]);
+                    return $this->returnResponse("success","Profile updated & new token generated successfully.",$data, 200);
+
+                }else{
+
+                    $data   = array([
+                                        'people_id'     => $record->id,
+                                        'fname'         => $record->fname,
+                                        'contact_no'    => $record->contact_no,
+                                        'email'         => $email,
+                                        'profile_pic'   => $pth
+                                    ]);
+                    return $this->returnResponse("success","Profile updated successfully.",$data, 200);
+                    
+                }
+            }else {
+                throw new Exception;
+            }
+        }
+        
+        catch(\Exception $e) {
+            app('App\Http\Controllers\MailController')->send_exception($e);
+            // return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
+            return $this->returnResponse("failed","Validation errors",$e, 404);
+        }
+    }
+    
+    // storing the detail of the people vechicle but not more than 3 vehicles
+    public function store_people_vehicle(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "store_people_vehicle")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        // More than 3 vehicles can not be added
+        $people_vehicles        =  People_vehicle::where('people_vehicles.people_id',$request->people_id)->count();
+        if($people_vehicles >= 3){
+            return $this->returnResponse("failed","Validation errors",["You already added 3 vehicles."], 404);
+        }
+        
+        $rcd                    = $request->all();
+
+        if( (array_key_exists("tax_pic",$rcd)) && (!empty($rcd['tax_pic']))  ){
+            // move the image to the taxes directory
+            $image              = $request->file('tax_pic');
+            $rcd['tax_pic']     = rand().'.'.$image->getClientOriginalExtension();
+                                    $image->move(public_path("uploads/taxes"),$rcd['tax_pic']);
+        }
+
+
+        // BEGIN::store detail in People_vehicle table
+            $rcd                = People_vehicle::create($rcd);
+        // END::store detail in People_vehicle table
+
+
+        $data                   = array([
+                                            'people_id'            => $rcd->people_id,
+                                            'vehicle_id'           => $rcd->id,
+                                            'vehicle_registration' => $rcd->vehicle_registration,
+                                            'make'                 => $rcd->make,
+                                            'modal'                => $rcd->modal,
+                                            'car_year'             => $rcd->car_year,
+                                            'color'                => $rcd->color,
+                                            'seat'                 => $rcd->seat
+                                        ]);
+
+
+        return $this->returnResponse("success","Vehicle added successfully.",$data, 200);
+    }
+
+    // updating the details of the people vehicle
+    public function update_people_vehicle(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "update_people_vehicle")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        $pth                    = "public/uploads/no_image.png";
+        $record                 = $request->all();  
+        $people_vehicle         = People_vehicle::where('id',$request->vehicle_id)->first();
+
+       
+        // uploading image
+        if( (array_key_exists("tax_pic",$record)) && (!empty($record['tax_pic']))  ){
+
+            // delete the previous image
+            if(isset($people_vehicle->tax_pic)){
+                if (file_exists( public_path('uploads/taxes/'.$people_vehicle->tax_pic) )){
+                    unlink(public_path('uploads/taxes/'.$people_vehicle->tax_pic));
+                }
+            }
+
+            // move the image to the licenses directory
+            $image                  = $request->file('tax_pic');
+            $record['tax_pic']      = rand().'.'.$image->getClientOriginalExtension();
+                                        $image->move(public_path("uploads/taxes"),$record['tax_pic']);
+        }
+
+        $people_vehicle->update($record);
+
+        if(isset($people_vehicle->tax_pic)){
+            $pth = "public/uploads/taxes/".($people_vehicle->tax_pic);  
+        }
+
+        $data   = array([
+                            'people_id'            => $people_vehicle->people_id,
+                            'vehicle_id'           => $people_vehicle->id,
+                            'vehicle_registration' => $people_vehicle->vehicle_registration,
+                            'make'                 => $people_vehicle->make,
+                            'car_year'             => $people_vehicle->car_year,
+                            'seat'                 => $people_vehicle->seat,
+                            'color'                => $people_vehicle->color,
+                            'modal'                => $people_vehicle->modal,
+                            'tax_pic'              => $pth
+                        ]);
+        return $this->returnResponse("success","Vehicle updated successfully.",$data, 200);
+    }
+
+    // fetching the all people vehicle via people_id
+    public function fetch_people_vehicle(MainRequest $request)  // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_people_vehicle")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        $people_vehicles        =  People_vehicle::where('people_vehicles.people_id',$request->people_id)
+                                    ->select(
+                                            'id as vehicle_id',
+                                            'vehicle_registration',
+                                            'make',
+                                            'modal',
+                                            'car_year',
+                                            'color',
+                                            'seat',
+                                            'active', // active: 1 OR active : 0
+
+                                            DB::raw('(CASE 
+                                                WHEN isNULL(people_vehicles.tax_pic) THEN "public/uploads/no_image.png" 
+                                                ELSE CONCAT("public/uploads/taxes/",people_vehicles.tax_pic)
+                                                END) AS tax_pic'
+                                            )
+                                            
+                                        )
+                                    ->get();
+                            
+        $tot_vehicle    = (count($people_vehicles));
+                                    
+        if(count($people_vehicles) < 3){
+            $people_vehicles = (count($people_vehicles) <1) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
+        }
+        
+        if(count($people_vehicles) > 0){
+            // $people_vehicles = (count($people_vehicles) <=3) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
+            $data   = array([
+                            'tot_vehicle'     => $tot_vehicle,
+                            'people_vehicles' =>  $people_vehicles 
+                        ]);
+
+            return $this->returnResponse("success","vehicle fetched by people successfully.",$data, 200);
+        }else{
+            $data   = array(['people_vehicles' =>  [] ]);
+            return $this->returnResponse("success","No vehicle found.",$data, 200);
+        }
+    }
+
+    public function store_schedule(MainRequest $request) // start from here
+    {
+        $record                 = People::where('id', $request->people_id)
+                                    ->where('type', 1) // 1: captain
+                                    ->first();
+
+        $schedule               = Schedule::where('captain_id', $request->people_id)
+                                    ->where('status_id','!=', env('STATUS_CANCEL_ID')) // cancelled
+                                    ->where('schedule_time', $request->schedule_time)
+                                    ->where('schedule_date', $request->schedule_date)
+                                    ->first();
+
+        
+        if ( empty($record) ){
+            return Response::json([
+                'status'    => "failed",
+                'msg'       => 'Only captain can create a ride, please add detail first',
+                "data"      => []
+            ], 404);
+        }
+
+        if (!( empty($schedule)) ){
+            return Response::json([
+                'status'    => "failed",
+                'msg'       => 'Schedule is already added',
+                "data"      => []
+            ], 404);
+        }
+
+        try {
+            // Transaction
+            $exception = DB::transaction(function()  use ($request, $record) {
+
+                // BEGIN::store detail in people_details table
+                    $schedule                = $request->all();
+                    $schedule['captain_id']  = $record->id;
+                    $schedule['status_id']   = 1;  // 1: Scheduled
+                    $schedule                = Schedule::create($schedule);
+                // END::store detail in people_details table
+
+                $this->store_history($record->id,1,$schedule->id,null,null,1);
+               
+
             });
             if(is_null($exception)) {
                 return Response::json([
                     'status'        => "success",
-                    'msg'           => "Booking cancelled successfully",
+                    'msg'           => "Schedule added successfully",
                     "data"          => []
                 ], 200);
             } else {
@@ -344,13 +773,31 @@ class MainController extends Controller
         }
         
         catch(\Exception $e) {
+            // dd($e);
             app('App\Http\Controllers\MailController')->send_exception($e);
             return Response::json([
                 'status'    => "failed",
-                'msg'       => 'Something went wrong.',
+                'msg'       => 'Something went wrong',
                 "data"      => []
             ], 404);
         }
+    }
+
+    public function store_history($people_id,$type,$schedule_id,$booking_id,$detail=null,$status_id)
+    {
+
+        // BEGIN::store history
+            $req                = array();
+            $req['people_id']   = $people_id;
+            $req['type']        = $type;
+            $req['schedule_id'] = $schedule_id;
+            $req['booking_id']  = $booking_id;
+            $req['detail']      = $detail;
+            $req['status_id']   = $status_id;
+            $req                = History::create($req);
+        // END::store history
+
+        return true;
     }
 
     public function cancel_schedule(MainRequest $request)
@@ -426,226 +873,6 @@ class MainController extends Controller
                 "data"      => []
             ], 404);
         }
-    }
-
-    public function toggle_role(MainRequest $request)
-    {
-        $msg                 = "";
-        $data                = [];
-        $code                = 404;
-        $status              = "failed";
-
-        $record              = People::where('id', $request->people_id)->first();
-
-
-        // dd($record->type);
-        if ( empty($record) ){
-            $msg              = "Couldn't find your Account";
-
-        }else if(($record->type  != "Captain") && ((ucfirst($request->role)) == "Captain") ){
-            $msg              = "Passenger can't be toggled to captain";
-
-        }else if(( (ucfirst(strtolower($request->role))) != "Passenger")  && ((ucfirst(strtolower($request->role))) != "Captain")){
-            $msg              = "Invalid toggle value!";
-
-        }else{
-            // BEGIN::update role of people from passenger to captain or vice versa
-                $rec['role'] = ((((ucfirst(strtolower($request->role)))) == "Passenger") ? 0 : 1 ); // 1: captain and 0: passenger
-                $record->update($rec);
-            // END::update role of people from passenger to captain or vice versa
-
-
-            if( $rec['role'] == 1 ){
-                $records    = $this->fetch_schedules($request,true);
-            }else{
-                $records    = $this->fetch_bookings($request,true);
-            }
-
-            $msg                 = "Role toggled successfully";
-            $status              = "success";
-            $code                = 200;
-            $data                = ['records' => $records];
-           
-        }
-
-        return Response::json([
-            'status'    => $status,
-            'msg'       => $msg,
-            "data"      => $data
-        ], $code);
-
-    }
-
-    
-    public function store_details(MainRequest $request)
-    {
-        $record              = People::where('cnic', $request->cnic)->first();
-        if ( empty($record) ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'CNIC does not match',
-                "data"      => []
-            ], 404);
-        }
-        $detail              = People_detail::where('people_id', $record->id)->first();
-        $vehicle             = People_vehicle::where('people_id', $record->id)->first();
-
-        if (!( empty($detail)) ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Details are already added',
-                "data"      => []
-            ], 404);
-        }
-
-        try {
-            // Transaction
-            $exception = DB::transaction(function()  use ($request,$record,$detail,$vehicle) {
-
-                // BEGIN::update type of people from passenger to captain to create the ride
-                    $rec['type']         = 1; // 1: captain and 0: passenger
-                    $rec['role']         = 1; // 1: captain and 0: passenger
-                    $record->update($rec);
-                // END::update type of people from passenger to captain to create the ride
-
-                // BEGIN::store detail in people_details table
-                    $input                = $request->all();
-                    $input['people_id']   = $record->id;
-                    $rec                  = People_detail::create($input);
-                // END::store detail in people_details table
-
-                if( (array_key_exists("tax_pic",$input)) && (!empty($input['tax_pic']))  ){
-
-                    // delete the previous image
-                    if(isset($vehicle->tax_pic)){
-                        if (file_exists( public_path('uploads/taxes/'.$vehicle->tax_pic) )){
-                            unlink(public_path('uploads/taxes/'.$vehicle->tax_pic));
-                        }
-                    }
-
-                    // move the image to the licenses directory
-                    $image                  = $request->file('tax_pic');
-                    $input['tax_pic']       = rand().'.'.$image->getClientOriginalExtension();
-                                              $image->move(public_path("uploads/licenses"),$input['tax_pic']);
-                }
-
-                // BEGIN::store detail in people_details table
-                    $rec                = People_vehicle::create($input);
-                // END::store detail in people_details table
-
-            });
-
-                
-            if(is_null($exception)) {
-
-                $vehicle             = People_vehicle::where('people_id', $record->id)->first();
-                $vehicle_id          = (isset($vehicle->id))? ($vehicle->id) :null ; 
-
-                return Response::json([
-                                        'status'        => "success",
-                                        'msg'           => "Details added successfully",
-                                        'data'          =>  [
-                                                                'fname'         => $record->fname,
-                                                                'people_id'     => $record->id,
-                                                                'type'          => "Captain",
-                                                                'vehicle_id'    => $vehicle_id
-                                                            ]
-                                    ], 200);
-            }else {
-                throw new Exception;
-            }
-        }
-        
-        catch(\Exception $e) {
-            app('App\Http\Controllers\MailController')->send_exception($e);
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Something went wrong',
-                "data"      => []
-            ], 404);
-        }
-    }
-
-    public function store_schedule(MainRequest $request)
-    {
-        $record                 = People::where('id', $request->people_id)
-                                    ->where('type', 1) // 1: captain
-                                    ->first();
-
-        $schedule               = Schedule::where('captain_id', $request->people_id)
-                                    ->where('status_id','!=', env('STATUS_CANCEL_ID')) // cancelled
-                                    ->where('schedule_time', $request->schedule_time)
-                                    ->where('schedule_date', $request->schedule_date)
-                                    ->first();
-
-        
-        if ( empty($record) ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Only captain can create a ride, please add detail first',
-                "data"      => []
-            ], 404);
-        }
-
-        if (!( empty($schedule)) ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Schedule is already added',
-                "data"      => []
-            ], 404);
-        }
-
-        try {
-            // Transaction
-            $exception = DB::transaction(function()  use ($request, $record) {
-
-                // BEGIN::store detail in people_details table
-                    $schedule                = $request->all();
-                    $schedule['captain_id']  = $record->id;
-                    $schedule['status_id']   = 1;  // 1: Scheduled
-                    $schedule                = Schedule::create($schedule);
-                // END::store detail in people_details table
-
-                $this->store_history($record->id,1,$schedule->id,null,null,1);
-               
-
-            });
-            if(is_null($exception)) {
-                return Response::json([
-                    'status'        => "success",
-                    'msg'           => "Schedule added successfully",
-                    "data"          => []
-                ], 200);
-            } else {
-                throw new Exception;
-            }
-        }
-        
-        catch(\Exception $e) {
-            // dd($e);
-            app('App\Http\Controllers\MailController')->send_exception($e);
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Something went wrong',
-                "data"      => []
-            ], 404);
-        }
-    }
-
-    public function store_history($people_id,$type,$schedule_id,$booking_id,$detail=null,$status_id){
-
-        // BEGIN::store history
-            $req                = array();
-            $req['people_id']   = $people_id;
-            $req['type']        = $type;
-            $req['schedule_id'] = $schedule_id;
-            $req['booking_id']  = $booking_id;
-            $req['detail']      = $detail;
-            $req['status_id']   = $status_id;
-            $req                = History::create($req);
-        // END::store history
-
-        return true;
     }
 
     public function store_booking(MainRequest $request)
@@ -724,6 +951,58 @@ class MainController extends Controller
         }
     }
 
+    public function cancel_booking(MainRequest $request)
+    {
+
+        $record             = Booking::where('bookings.active',1)
+                                ->where('bookings.passenger_id',$request->people_id)
+                                ->where('bookings.id',$request->booking_id)
+                                ->where('bookings.status_id','<=',3)
+                                ->first();
+                                
+                        
+        // is booking exist
+        if(empty($record)){
+            return Response::json([
+                                    'status'    => "failed",
+                                    'msg'       => 'No booking found.',
+                                    "data"      => []
+                                ], 404);
+        }
+
+        try {
+            // Transaction
+            $exception = DB::transaction(function()  use ($request,$record) {
+
+                // BEGIN::update schedule to cancel
+                    $input                      = $request->all();
+                    $input['status_id']         = env('STATUS_CANCEL_ID'); 
+                                                  $record->update($input);
+                // END::update schedule to cancel
+
+                $this->store_history($request->people_id,0,$record->schedule_id,$request->booking_id,null,env('STATUS_CANCEL_ID'));
+            });
+            if(is_null($exception)) {
+                return Response::json([
+                    'status'        => "success",
+                    'msg'           => "Booking cancelled successfully",
+                    "data"          => []
+                ], 200);
+            } else {
+                throw new Exception;
+            }
+        }
+        
+        catch(\Exception $e) {
+            app('App\Http\Controllers\MailController')->send_exception($e);
+            return Response::json([
+                'status'    => "failed",
+                'msg'       => 'Something went wrong.',
+                "data"      => []
+            ], 404);
+        }
+    }
+
     public function count_schedules($captain_id){
 
         return  Schedule::where('schedules.active',1)
@@ -731,8 +1010,6 @@ class MainController extends Controller
                         ->where('schedules.status_id','<=',3)
                         ->count();
     }
-    
-    
     
     public function count_bookings($schedule_id){
 
@@ -743,7 +1020,7 @@ class MainController extends Controller
         return    $seats;
     }
 
-    function fetch_schedule_of_booking($schedule_id){
+    public function fetch_schedule_of_booking($schedule_id){
         
         $schedule           = Schedule::where('schedules.active',1)
                                 ->where('schedules.id',$schedule_id)
@@ -893,7 +1170,7 @@ class MainController extends Controller
                             ], 200);
     }
     
-    function getaddress($lat,$lng)
+    private function getaddress($lat,$lng)
     {
         $GOOGLE_API_KEY  = "AIzaSyDv_BD3VEJY5prw23hH7G1iaeoNfWdmkDk";
 
@@ -1076,7 +1353,6 @@ class MainController extends Controller
                             ], 200);
     }
 
-
     public function fetch_schedule_by_time(MainRequest $request)
     {
         
@@ -1174,7 +1450,16 @@ class MainController extends Controller
                                                 ]
                             ], 200);
     }
+    
+    public function append_rating($schedules){
+       
+        foreach ($schedules as $key => $schedule) {
+            $rating                     = People_rating::where('people_ratings.schedule_id',$schedule->schedule_id)->avg('people_ratings.rating');
+            $schedules[$key]->rating    = round($rating);
+        }
 
+        return $schedules;
+    }
 
     public function fetch_ratings()
     {
@@ -1195,404 +1480,6 @@ class MainController extends Controller
                                                     'ratings' =>  $ratings
                                                 ]
                             ], 200);
-    }
-
-    public function fetch_provinces()
-    {
-        $records        = array();
-        $all_records    = array();
-
-        $provinces      = Province::orderBy('id')
-                            ->select('id','name')
-                            ->where('active',1)
-                            ->get();
-
-        foreach ($provinces as $key => $province) {
-            $records            = (object) array(
-                                    "province_id"       => ((isset($province->id)) ? $province->id : "" ),
-                                    "province_name"     => ((isset($province->name)) ? $province->name : "" ),
-                                    "cities"            => $province->cities($province->id)
-                                    
-                                );
-
-            array_push($all_records, $records);
-        }
-
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Provinces fetched successfully",
-                                "data"          => [
-                                                    'provinces' =>  $all_records
-                                                ]
-                            ], 200);
-    }
-
-    
-    public function fetch_cities()
-    {
-        $record     = City::select('id','name','lat','lng')->where('active',1)->get()->toArray();
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Cities fetched successfully",
-                                "data"          => [
-                                                    'cities' =>  $record
-                                                ]
-                            ], 200);
-    }
-    
-    
-    public function update_profile(MainRequest $request)
-    {
-        $token              = null;
-        $record             = People::where('contact_no', $request->contact_no)->first();
-        $record_details     = People_detail::where('people_id', $record->id)->first();
-
-        // BEGIN :: checking is valid contact no
-        if(empty($record)){
-            return Response::json([
-                                    'status'    => "failed",
-                                    'msg'       => 'Couldn\'t find your Account.',
-                                    "data"      => []
-                                ], 404);
-        }
-        // END :: checking is valid contact no
-
-        // BEGIN :: checking is password valid 
-        if(isset($request->old_password)){
-
-            if(!(isset($request->new_password))){
-                return Response::json([
-                    'status'    => "failed",
-                    'msg'       => 'please enter new password',
-                    "data"      => []
-                ], 404);
-            }
-
-            if(!(Hash::check($request->old_password, $record->password))) {
-                return Response::json([
-                    'status'    => "failed",
-                    'msg'       => 'Invalid password',
-                    "data"      => []
-                ], 404);
-            }
-        }
-
-        // END :: checking is password valid 
-
-
-        try {
-            // Transaction
-            $exception = DB::transaction(function()  use ($request,$record,$record_details,$token) {
-          
-                // update profile with or without password 
-                if(isset($request->old_password)){
-                
-                    // update fname and password
-                    $record->update([
-                        'fname'      => $request->fname,
-                        'password'   => Hash::make($request->new_password),
-                    ]);
-                    
-                   
-                    // delete all previous tokens of this ID
-                    $record->tokens()
-                        ->where('tokenable_id', $record->id)
-                        ->where('name', 'people-token')
-                        ->delete();
-
-                }else{
-                    $record->update([
-                        'fname'      => $request->fname
-                    ]);
-                }
-      
-                // input variables 
-                $req                = $request->all();
-                $input              = $request->all();   
-                $req['people_id']   = $record->id;
-
-                // BEING :: uploading image
-                if( (array_key_exists("profile_pic",$input)) && (!empty($input['profile_pic']))  ){
-        
-                    // delete the previous image
-                    if(isset($record_details->profile_pic)){
-                        if (file_exists( public_path('uploads/peoples/'.$record_details->profile_pic) )){
-                            unlink(public_path('uploads/peoples/'.$record_details->profile_pic));
-                        }
-                    }
-
-                    $image                  = $request->file('profile_pic');
-                    $input['profile_pic']   = rand().'.'.$image->getClientOriginalExtension();
-                                              $image->move(public_path("uploads/peoples"),$input['profile_pic']);
-        
-
-                    // if details not exists
-                    if ($record_details !== null) {
-                        $record_details->update([
-                            'email'       => $request->email,
-                            'profile_pic' => $input['profile_pic']
-                        ]);
-                    } else {
-                        $record_details = People_detail::create([
-                            'people_id'   => $record->id,
-                            'email'       => $request->email,
-                            'profile_pic' => $input['profile_pic']
-                        ]);
-                    }
-
-                    // People_detail::updateOrCreate(
-                    //     ['people_id'    => $record->id],
-                    //     ['email'        => $request->email],
-                    //     ['profile_pic'  => $input['profile_pic']]
-                    // );
-                 
-                }else{
-                    // People_detail::updateOrCreate(
-                    //     ['people_id'    => $record->id],
-                    //     ['email'        => $request->email]
-                    // );
-
-                    // if details not exists
-                    if ($record_details !== null) {
-                        $record_details->update([
-                            'email'       => $request->email
-                        ]);
-                    } else {
-                        $record_details = People_detail::create([
-                            'people_id'   => $record->id,
-                            'email'       => $request->email,
-                        ]);
-                    }
-                    
-                }
-            });
-
-            
-            if(is_null($exception)) {
-                // create new token for this ID
-                
-                $record_details     = People_detail::where('people_id', $record->id)->first();
-                $token              = (isset($request->old_password)) ? $record->createToken('people-token')->plainTextToken: null;
-                $pth                = ((isset($record_details->profile_pic))) ? ( "public/uploads/peoples/".($record_details->profile_pic)) : ("public/uploads/no_image.png");
-                $email              = (isset($record_details->email)) ? ($record_details->email):"" ;
-
-                if($token != null){
-                    return Response::json([
-                        'status'        => "success",
-                        'msg'           => "Profile updated & new token generated successfully",
-                        "data"          => [
-                                                'token'         => $token,
-                                                'people_id'     => $record->id,
-                                                'fname'         => $record->fname,
-                                                'contact_no'    => $record->contact_no,
-                                                'email'         => $email,
-                                                'profile_pic'   => $pth
-                                        ]
-                    ], 200);
-
-                }else{
-                    return Response::json([
-                        'status'        => "success",
-                        'msg'           => "Profile updated successfully",
-                        "data"          => [
-                                                'people_id'     => $record->id,
-                                                'fname'         => $record->fname,
-                                                'contact_no'    => $record->contact_no,
-                                                'email'         => $email,
-                                                'profile_pic'   => $pth
-                                        ]
-                    ], 200);
-                }
-            }else {
-                throw new Exception;
-            }
-        }
-        
-        catch(\Exception $e) {
-            app('App\Http\Controllers\MailController')->send_exception($e);
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Something went wrong',
-                "data"      => $e
-            ], 404);
-        }
-    }
-    
-    
-    public function store_people_vehicle(MainRequest $request)
-    {
-
-
-        $record_details         =  People_detail::where('people_id', $request->people_id)->first();
-
-   
-      
-        if (( empty($record_details)) ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Please complete the registration first',
-                "data"      => []
-            ], 404);
-        }
-
-        
-        $rcd                = $request->all();
-
-        if( (array_key_exists("tax_pic",$rcd)) && (!empty($rcd['tax_pic']))  ){
-
-            // delete the previous image
-            // if(isset($people_vehicle->tax_pic)){
-            //     if (file_exists( public_path('uploads/taxes/'.$people_vehicle->tax_pic) )){
-            //         unlink(public_path('uploads/taxes/'.$people_vehicle->tax_pic));
-            //     }
-            // }
-
-            // move the image to the licenses directory
-            $image                  = $request->file('tax_pic');
-            $rcd['tax_pic']       = rand().'.'.$image->getClientOriginalExtension();
-                                    $image->move(public_path("uploads/licenses"),$rcd['tax_pic']);
-
-        }
-
-
-        // BEGIN::store detail in People_vehicle table
-            $rcd                = People_vehicle::create($rcd);
-        // END::store detail in People_vehicle table
-
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "vehicle added successfully",
-                                'data'          =>  [
-                                                        'people_id'            => $rcd->people_id,
-                                                        'vehicle_id'           => $rcd->id,
-                                                        'vehicle_registration' => $rcd->vehicle_registration,
-                                                        'make'                 => $rcd->make,
-                                                        'modal'                => $rcd->modal,
-                                                        'car_year'             => $rcd->car_year,
-                                                        'color'                => $rcd->color,
-                                                        'seat'                 => $rcd->seat
-                                                    ]
-                            ], 200);
-    }
-
-    public function update_people_vehicle(MainRequest $request)
-    {
-        $pth                    = "public/uploads/no_image.png";
-        $record                 = $request->all();  
-        $people_vehicle         = People_vehicle::where('id',$request->vehicle_id)->first();
-
-        // if vehicle exists 
-        if(isset( $people_vehicle->id )){
-            // uploading image
-            if( (array_key_exists("tax_pic",$record)) && (!empty($record['tax_pic']))  ){
-
-                // delete the previous image
-                if(isset($people_vehicle->tax_pic)){
-                    if (file_exists( public_path('uploads/taxes/'.$people_vehicle->tax_pic) )){
-                        unlink(public_path('uploads/taxes/'.$people_vehicle->tax_pic));
-                    }
-                }
-
-                // move the image to the licenses directory
-                $image                  = $request->file('tax_pic');
-                $record['tax_pic']      = rand().'.'.$image->getClientOriginalExtension();
-                                          $image->move(public_path("uploads/licenses"),$record['tax_pic']);
-            }
-
-            $people_vehicle->update($record);
-
-            if(isset($people_vehicle->tax_pic)){
-                $pth = "public/uploads/taxes/".($people_vehicle->tax_pic);  
-            }
-            return Response::json([
-                                    'status'        => "success",
-                                    'msg'           => "Update successfully",
-                                    'data'          =>  [
-                                                            'people_id'            => $people_vehicle->people_id,
-                                                            'vehicle_id'           => $people_vehicle->id,
-                                                            'vehicle_registration' => $people_vehicle->vehicle_registration,
-                                                            'make'                 => $people_vehicle->make,
-                                                            'car_year'             => $people_vehicle->car_year,
-                                                            'seat'                 => $people_vehicle->seat,
-                                                            'color'                => $people_vehicle->color,
-                                                            'modal'                => $people_vehicle->modal,
-                                                            'tax_pic'              => $pth
-                                                        ]
-                                ], 200);
-
-        }else{
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'No vehicle found!',
-                "data"      => []
-            ], 404);
-
-        }
-       
-    }
-
-    // public function active_vehicle(MainRequest $request){
-
-        // $upd                = People_vehicle::where('bookings.active',1)
-        //                         ->where('bookings.schedule_id',$request->schedule_id)
-        //                         ->where('bookings.status_id','<=',3)
-        //                         ->update(['status_id' =>  env('STATUS_CANCEL_ID') ]);
-
-    // }
-
-
-
-    public function fetch_people_vehicle(MainRequest $request)
-    {
-        $people_vehicles        =  People_vehicle::where('people_vehicles.people_id',$request->people_id)
-                                    ->select(
-                                            'id as vehicle_id',
-                                            'vehicle_registration',
-                                            'make',
-                                            'modal',
-                                            'car_year',
-                                            'color',
-                                            'seat',
-                                            'active', // active: 1 OR active : 0
-
-                                            DB::raw('(CASE 
-                                                WHEN isNULL(people_vehicles.tax_pic) THEN "public/uploads/no_image.png" 
-                                                ELSE CONCAT("public/uploads/taxes/",people_vehicles.tax_pic)
-                                                END) AS tax_pic'
-                                            )
-                                            
-                                        )
-                                    ->get();
-                            
-        $tot_vehicle    = (count($people_vehicles));
-                                    
-        if(count($people_vehicles) < 3){
-            $people_vehicles = (count($people_vehicles) <1) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
-        }
-        
-        if(count($people_vehicles) > 0){
-
-            // $people_vehicles = (count($people_vehicles) <=3) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
-          
-            return Response::json([
-                'status'        => "success",
-                'msg'           => "vehicle fetched by people successfully",
-                'data'          => [
-                                        'tot_vehicle'     => $tot_vehicle,
-                                        'people_vehicles' =>  $people_vehicles 
-                                ]
-            ], 200);
-            
-        }else{
-            return Response::json([
-                'status'        => "success",
-                'msg'           => "no vehicle found",
-                'data'          => [
-                                        'people_vehicles' =>  []
-                                ]
-            ], 200);
-        }
-        
     }
     
     public function logout()

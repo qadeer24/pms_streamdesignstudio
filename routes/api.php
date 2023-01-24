@@ -32,7 +32,7 @@ use App\Events\Message;
     Route::group(['middleware' => 'auth:sanctum'], function(){
         
         Route::post("fetch_provinces",[MainController::class, 'fetch_provinces']);
-        Route::get("fetch_cities",[MainController::class, 'fetch_cities']);
+        Route::post("fetch_cities",[MainController::class, 'fetch_cities']);
 
         Route::post("fetch_schedule_by_people",[MainController::class, 'fetch_schedule_by_people']);
         Route::post("fetch_schedule_by_city",[MainController::class, 'fetch_schedule_by_city']);

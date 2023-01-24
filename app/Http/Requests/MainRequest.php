@@ -11,23 +11,26 @@ class MainRequest extends FormRequest
    
     public function rules()
     {
-        if((isset($this->action)) && (($this->action) == "register") ){
+        if((isset($this->action)) && (($this->action) == "register") ){  // done
             $con    =   [
-                'fname'         => 'required|min:3|regex:/^([^0-9]*)$/',
-                'email'         => 'email|unique:people,email,NULL,id,verified,1',
-                'cnic'          => 'required|digits:13|numeric|unique:people,cnic',
-                'password'      => 'required|min:8',
-                'contact_no'    => 'required|digits:11|numeric|unique:people,contact_no,NULL,id,verified,1'
-            ];
+                            'fname'         => 'required|min:3|regex:/^([^0-9]*)$/',
+                            'email'         => 'email|unique:people,email,NULL,id,verified,1',
+                            'cnic'          => 'required|digits:13|regex:/^[0-9]+$/|unique:people,cnic',
+                            'password'      => 'required|min:8',
+                            'contact_no'    => 'required|digits:11|numeric|unique:people,contact_no,NULL,id,verified,1'
+                        ];
 
             return $con; 
 
         }else if((isset($this->action)) && (($this->action) == "login") ){
-            $con    =   [ 'contact_no'    => 'required|digits:11|numeric' ];
+            $con    =   [ 
+                            'contact_no'    => 'required|digits:11|numeric|exists:people,contact_no',
+                            'password'      => 'required|min:8',
+                        ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_details") ){
             $con    =   [
-                            'cnic'                    => 'required|digits:13|numeric',
+                            'cnic'                    => 'required|digits:13|numeric|exists:people,cnic',
                             'address'                 => 'required|min:3',
                             'license_no'              => 'required|min:3',
                             'age'                     => 'required|numeric',
@@ -53,7 +56,7 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "forgot") ){
             $con    =   [
-                            'contact_no'    => 'required|digits:11|numeric'
+                            'contact_no'    => 'required|digits:11|numeric|exists:people,contact_no'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "forgot_otp") ){
@@ -64,13 +67,13 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "toggle_role") ){
             $con    =   [
-                            'people_id'         => 'required|numeric',
+                            'people_id'         => 'required|numeric|exists:people,id',
                             'role'              => 'required',
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_password") ){
             $con    =   [
-                            'temp_code'     => 'required|digits:10|numeric',
+                            'temp_code'     => 'required|digits:10|numeric|exists:people,temp_code',
                             'password'      => 'required|min:8',
                         ];
             return $con; 
@@ -167,7 +170,7 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_profile") ){
             $con    =   [ 
-                            'contact_no'    => 'required|digits:11|numeric',
+                            'contact_no'    => 'required|digits:11|numeric|exists:people,contact_no',
                             'fname'         => 'required',
                             'email'         => 'required',
                         //   'profile_pic'   => 'required',
@@ -180,7 +183,7 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_people_vehicle") ){
             $con    =   [
-                            'people_id'             => 'required|numeric',
+                            'people_id'             => 'required|numeric|exists:people_details,people_id',
                             'vehicle_registration'  => 'required',
                             'make'                  => 'required',
                             'modal'                 => 'required',
@@ -194,7 +197,7 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_people_vehicle") ){
             $con    =   [ 
-                            'vehicle_id'            => 'required|numeric',
+                            'vehicle_id'            => 'required|numeric|exists:people_vehicles,id',
                             'vehicle_registration'  => 'required',
                             'make'                  => 'required',
                             'modal'                 => 'required',
@@ -209,7 +212,7 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_people_vehicle") ){
             $con    =   [
-                            'people_id'         => 'required|numeric'
+                            'people_id'         => 'required|numeric|exists:people,id'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "logout") ){
@@ -261,7 +264,9 @@ class MainRequest extends FormRequest
             'password.min'          => 'Password must be 8 character long!',
             'role.required'         => 'Role is required use value i.e. Captain, Passenger!',
 
-            'id.required'           => 'Vehicle id is required'
+            'id.required'           => 'Vehicle id is required',
+            'temp_code.exists'       => 'Unable to find the user'
+
             
         ];
     }
