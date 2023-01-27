@@ -14,8 +14,10 @@ class People_rating extends Model
     protected $dates    = ['deleted_at'];
     protected $fillable = [
         'captain_id',
+        'schedule_id',
         'passenger_id',
-        'rating',
+        'rating_id',
+        'rating_stars',
         'active'
     ];
 

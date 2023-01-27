@@ -11,10 +11,12 @@ class Complaint extends Model
     use HasFactory, SoftDeletes;
     protected $dates = ['deleted_at'];
     protected $fillable = [
-        'name',
+        'captain_id',
+        'schedule_id',
+        'passenger_id',
+        'complaint_tag_id',
         'active',
-        'created_by',
-        'updated_by'
+        'detail',
     ];
 
     public function getActiveAttribute($value)
@@ -22,8 +24,4 @@ class Complaint extends Model
         return ($value == 1) ? "Active" : "Inactive";
     }
 
-    public function getNameAttribute($value)
-    {
-        return ucwords($value);
-    }
 }

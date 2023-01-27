@@ -14,6 +14,7 @@ class CreateComplaintsTable extends Migration
     public function up()
     {
         Schema::create('complaints', function (Blueprint $table) {
+            $table->increments('id');
             $table->unsignedInteger('captain_id'); 
             $table->unsignedInteger('schedule_id'); 
             $table->unsignedInteger('passenger_id'); 

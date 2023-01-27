@@ -17,8 +17,6 @@ class CreateReasonsTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->boolean('active')->default(1);
-            $table->unsignedInteger('created_by')->nullable();
-            $table->unsignedInteger('updated_by')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

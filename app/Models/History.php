@@ -32,4 +32,24 @@ class History extends Model
     {
         return ($value == 1) ? "Captain" : "Passenger";
     }
+
+    public function schedule()
+    {
+        return $this->belongsTo(Schedule::class, 'schedule_id', 'id');
+    }
+
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class, 'booking_id', 'id');
+    }
+
+    public function people()
+    {
+        return $this->belongsTo(People::class, 'people_id', 'id');
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(Status::class, 'status_id', 'id');
+    }
 }

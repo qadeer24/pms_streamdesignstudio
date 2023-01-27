@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateComplaintTagsTable extends Migration
+class CreateMessagesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,11 @@ class CreateComplaintTagsTable extends Migration
      */
     public function up()
     {
-        Schema::create('complaint_tags', function (Blueprint $table) {
+        Schema::create('messages', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name');
+            $table->text('message')->nullable();
+            $table->unsignedInteger('sender_id');
+            $table->unsignedInteger('receiver_id');
             $table->boolean('active')->default(1);
             $table->softDeletes();
             $table->timestamps();
@@ -29,6 +31,6 @@ class CreateComplaintTagsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('complaint_tags');
+        Schema::dropIfExists('messages');
     }
 }

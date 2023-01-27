@@ -144,7 +144,7 @@ class PeopleController extends Controller
                     ->leftjoin('people', 'people.id', '=', 'people_ratings.passenger_id')
                     ->select(
                                 'people_ratings.id',
-                                'people_ratings.rating',
+                                'people_ratings.rating_stars',
                                 'people.fname as pas_name',
                             )
                     ->where('people_ratings.captain_id',$captain_id)

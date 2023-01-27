@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             CitySeeder::class,
             Complaint_tagSeeder::class,
+            Payment_methodSeeder::class,
             RatingSeeder::class,
             ReasonSeeder::class,
             StatusSeeder::class,

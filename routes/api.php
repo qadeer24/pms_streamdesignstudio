@@ -40,16 +40,18 @@ use App\Events\Message;
         Route::post("fetch_schedule_by_time",[MainController::class, 'fetch_schedule_by_time']);
 
         Route::post("cancel_booking",[MainController::class, 'cancel_booking']);
+        Route::post("mark_booking_complete",[MainController::class, 'mark_booking_complete']);
         Route::post("cancel_schedule",[MainController::class, 'cancel_schedule']);
-
+        
         Route::post("store_booking",[MainController::class, 'store_booking']);
         Route::post("fetch_booking",[MainController::class, 'fetch_booking']);
         Route::post("fetch_bookings",[MainController::class, 'fetch_bookings']);
         
         Route::post("fetch_cancel_reasons",[MainController::class, 'fetch_cancel_reasons']);
         Route::post("fetch_ratings",[MainController::class, 'fetch_ratings']);
-        
+        Route::post("store_ratings",[MainController::class, 'store_ratings']);
 
+        Route::post("fetch_ride_history",[MainController::class, 'fetch_ride_history']);
         Route::post("store_schedule",[MainController::class, 'store_schedule']);
         Route::post("fetch_schedules",[MainController::class, 'fetch_schedules']);
 

@@ -24,6 +24,8 @@ class CreateBookingsTable extends Migration
 
             $table->unsignedTinyInteger('cancel_reason_id')->nullable();
             $table->text('cancel_reason')->nullable();
+            $table->boolean('cancel')->default(0);
+            $table->boolean('complete')->default(0);
             
             $table->unsignedTinyInteger('status_id')->nullable();
             $table->boolean('active')->default(1);

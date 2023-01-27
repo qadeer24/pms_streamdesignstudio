@@ -18,15 +18,15 @@ class Schedule extends Model
 
         'pickup_city_id',
         'pickup_area_id',
+        'pickup_address',
         'pickup_lat',
         'pickup_lng',
-        'pickup_address',
 
         'dropoff_city_id',
         'dropoff_area_id',
+        'dropoff_address',
         'dropoff_lat',
         'dropoff_lng',
-        'dropoff_address',
 
         'schedule_date',
         'schedule_time',
@@ -75,6 +75,16 @@ class Schedule extends Model
     public function getActiveAttribute($value)
     {
         return ($value == 1) ? "Active" : "Inactive";
+    }
+
+    public function captain()
+    {
+        return $this->belongsTo(People::class, 'captain_id', 'id');
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(People_vehicle::class, 'vehicle_id', 'id');
     }
 
 }

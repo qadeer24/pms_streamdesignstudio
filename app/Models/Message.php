@@ -14,19 +14,17 @@ class Message extends Model
         'message',
         'sender_id',
         'receiver_id',
-        'active',
-        'created_by',
-        'updated_by'
+        'active'
     ];
     public function getActiveAttribute($value)
     {
         return ($value == 1) ? "Active" : "Inactive";
     }
 
-    public function getNameAttribute($value)
-    {
-        return ucwords($value);
-    }
+    // public function getNameAttribute($value)
+    // {
+    //     return ucwords($value);
+    // }
 
     
     public function sender()

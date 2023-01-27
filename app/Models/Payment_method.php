@@ -6,15 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Status extends Model
+class Payment_method extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $dates    = ['deleted_at'];
+    protected $dates = ['deleted_at'];
     protected $fillable = [
         'name',
         'active',
     ];
-    
+
     public function getActiveAttribute($value)
     {
         return ($value == 1) ? "Active" : "Inactive";

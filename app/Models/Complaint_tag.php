@@ -13,8 +13,6 @@ class Complaint_tag extends Model
     protected $fillable = [
         'name',
         'active',
-        'created_by',
-        'updated_by'
     ];
 
     public function getActiveAttribute($value)

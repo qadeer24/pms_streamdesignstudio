@@ -15,11 +15,11 @@ class CreatePeopleRatingsTable extends Migration
     {
         Schema::create('people_ratings', function (Blueprint $table) {
             $table->increments('id');
-            
             $table->unsignedInteger('captain_id');
             $table->unsignedInteger('schedule_id');
             $table->unsignedInteger('passenger_id');
-            $table->unsignedTinyInteger('rating')->nullable();
+            $table->unsignedInteger('rating_id')->nullable();
+            $table->unsignedTinyInteger('rating_stars')->nullable();
             $table->boolean('active')->default(1);
             $table->softDeletes();
             $table->timestamps();

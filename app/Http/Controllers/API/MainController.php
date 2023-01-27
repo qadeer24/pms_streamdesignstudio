@@ -2,6 +2,8 @@
 namespace App\Http\Controllers\API;
 
 use DB;
+use Carbon\Carbon;
+
 use Response;
 use Validator;
 use Exception;
@@ -366,7 +368,7 @@ class MainController extends Controller
                 $vehicle    = People_vehicle::where('people_id', $record->id)->first();
                 $vehicle_id = (isset($vehicle->id))? ($vehicle->id) :null ; 
 
-                $data       = array([
+                $data       = ([
                                         'fname'         => $record->fname,
                                         'people_id'     => $record->id,
                                         'type'          => "Captain",
@@ -409,7 +411,7 @@ class MainController extends Controller
             array_push($all_records, $records);
         }
 
-        $data   = array(['provinces' =>  $all_records]);
+        $data   = (['provinces' =>  $all_records]);
         return $this->returnResponse("success","Provinces fetched successfully.",$data, 200);
 
     }
@@ -418,7 +420,7 @@ class MainController extends Controller
     public function fetch_cities() // done
     {
         $record     = City::select('id','name','lat','lng')->where('active',1)->get()->toArray();
-        $data       = array(['cities' =>  $record]);
+        $data       = (['cities' =>  $record]);
 
         return $this->returnResponse("success","Cities fetched successfully.",$data, 200);
     }
@@ -545,7 +547,7 @@ class MainController extends Controller
 
                 if($token != null){
 
-                    $data   = array([
+                    $data   = ([
                                         'token'         => $token,
                                         'people_id'     => $record->id,
                                         'fname'         => $record->fname,
@@ -557,7 +559,7 @@ class MainController extends Controller
 
                 }else{
 
-                    $data   = array([
+                    $data   = ([
                                         'people_id'     => $record->id,
                                         'fname'         => $record->fname,
                                         'contact_no'    => $record->contact_no,
@@ -574,8 +576,8 @@ class MainController extends Controller
         
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
-            // return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
-            return $this->returnResponse("failed","Validation errors",$e, 404);
+            return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
+            // return $this->returnResponse("failed","Validation errors",$e, 404);
         }
     }
     
@@ -607,7 +609,7 @@ class MainController extends Controller
         // END::store detail in People_vehicle table
 
 
-        $data                   = array([
+        $data                   = ([
                                             'people_id'            => $rcd->people_id,
                                             'vehicle_id'           => $rcd->id,
                                             'vehicle_registration' => $rcd->vehicle_registration,
@@ -619,7 +621,7 @@ class MainController extends Controller
                                         ]);
 
 
-        return $this->returnResponse("success","Vehicle added successfully.",$data, 200);
+        return $this->returnResponse("success","Vehicle stored successfully.",$data, 200);
     }
 
     // updating the details of the people vehicle
@@ -656,7 +658,7 @@ class MainController extends Controller
             $pth = "public/uploads/taxes/".($people_vehicle->tax_pic);  
         }
 
-        $data   = array([
+        $data   = ([
                             'people_id'            => $people_vehicle->people_id,
                             'vehicle_id'           => $people_vehicle->id,
                             'vehicle_registration' => $people_vehicle->vehicle_registration,
@@ -705,20 +707,49 @@ class MainController extends Controller
         
         if(count($people_vehicles) > 0){
             // $people_vehicles = (count($people_vehicles) <=3) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
-            $data   = array([
+            $data   = ([
                             'tot_vehicle'     => $tot_vehicle,
                             'people_vehicles' =>  $people_vehicles 
                         ]);
 
             return $this->returnResponse("success","vehicle fetched by people successfully.",$data, 200);
         }else{
-            $data   = array(['people_vehicles' =>  [] ]);
+            $data   = (['people_vehicles' =>  [] ]);
             return $this->returnResponse("success","No vehicle found.",$data, 200);
         }
     }
 
-    public function store_schedule(MainRequest $request) // start from here
+    // store the history of schedule 
+    public function store_history($people_id,$type,$schedule_id,$booking_id,$detail=null,$status_id)  // done
     {
+        // BEGIN::store history
+            $req                = array();
+            $req['people_id']   = $people_id;
+            $req['type']        = $type;
+            $req['schedule_id'] = $schedule_id;
+            $req['booking_id']  = $booking_id;
+            $req['detail']      = $detail;
+            $req['status_id']   = $status_id;
+            $req                = History::create($req);
+        // END::store history
+        return true;
+    }
+
+    // store the schedule of a captain
+    public function store_schedule(MainRequest $request)  // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "store_schedule")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        if(($request->dropoff_area_id)  ==  ($request->pickup_area_id)){
+            return $this->returnResponse("failed","Validation errors",["Pickup & dropoff areas cannot be same."], 404);
+        }
+
+        $people_vehicle         = People_vehicle::where('id',$request->vehicle_id)
+                                    ->select('seat')
+                                    ->first();
+        
         $record                 = People::where('id', $request->people_id)
                                     ->where('type', 1) // 1: captain
                                     ->first();
@@ -729,21 +760,24 @@ class MainController extends Controller
                                     ->where('schedule_date', $request->schedule_date)
                                     ->first();
 
-        
-        if ( empty($record) ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Only captain can create a ride, please add detail first',
-                "data"      => []
-            ], 404);
+
+        if (!(isset($people_vehicle->seat)) ){
+            return $this->returnResponse("failed","Validation errors",["Vehicle seat not found."], 404);
         }
 
-        if (!( empty($schedule)) ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Schedule is already added',
-                "data"      => []
-            ], 404);
+        
+        if ( ($request->vacant_seat) > ($people_vehicle->seat)  ){
+            $msg = "You can't enter more than " . ($people_vehicle->seat) . " seats";
+            return $this->returnResponse("failed","Validation errors",[$msg], 404);
+        }
+
+
+        if (!(isset($record->id)) ){
+            return $this->returnResponse("failed","Validation errors",["Only captain can create a ride, please add detail first."], 404);
+        }
+
+        if ((isset($schedule->id)) ){
+            return $this->returnResponse("failed","Validation errors",["Schedule is already added."], 404);
         }
 
         try {
@@ -758,50 +792,28 @@ class MainController extends Controller
                 // END::store detail in people_details table
 
                 $this->store_history($record->id,1,$schedule->id,null,null,1);
-               
-
             });
+
             if(is_null($exception)) {
-                return Response::json([
-                    'status'        => "success",
-                    'msg'           => "Schedule added successfully",
-                    "data"          => []
-                ], 200);
+                return $this->returnResponse("success","Schedule added successfully.",[], 200);
             } else {
                 throw new Exception;
             }
         }
         
         catch(\Exception $e) {
-            // dd($e);
             app('App\Http\Controllers\MailController')->send_exception($e);
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Something went wrong',
-                "data"      => []
-            ], 404);
+            return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
         }
     }
 
-    public function store_history($people_id,$type,$schedule_id,$booking_id,$detail=null,$status_id)
+    // cancel the schedule of a captain
+    public function cancel_schedule(MainRequest $request)  // done
     {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "cancel_schedule")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
 
-        // BEGIN::store history
-            $req                = array();
-            $req['people_id']   = $people_id;
-            $req['type']        = $type;
-            $req['schedule_id'] = $schedule_id;
-            $req['booking_id']  = $booking_id;
-            $req['detail']      = $detail;
-            $req['status_id']   = $status_id;
-            $req                = History::create($req);
-        // END::store history
-
-        return true;
-    }
-
-    public function cancel_schedule(MainRequest $request)
-    {
         $record             = Schedule::where('schedules.active',1)
                                 ->where('schedules.captain_id',$request->people_id)
                                 ->where('schedules.id',$request->schedule_id)
@@ -809,12 +821,8 @@ class MainController extends Controller
                                 ->first();
                                 
         // is schedule exist
-        if(empty($record)){
-            return Response::json([
-                                    'status'    => "failed",
-                                    'msg'       => 'No schedule found.',
-                                    "data"      => []
-                                ], 404);
+        if (!(isset($record->id)) ){
+            return $this->returnResponse("failed","Validation errors",["No schedule found."], 404);
         }
 
         try {
@@ -827,7 +835,7 @@ class MainController extends Controller
                 // END::update schedule to cancel
 
                 // BEGIN::store cancel schedule history
-                    $this->store_history($request->people_id,1,$record->schedule_id,null,null,env('STATUS_CANCEL_ID'));
+                    $this->store_history($request->people_id,1,$request->schedule_id,null,null,env('STATUS_CANCEL_ID'));
                 // END::store cancel schedule history
 
                 
@@ -849,17 +857,13 @@ class MainController extends Controller
 
                 // BEGIN::store cancel history of booking because schedule is cancelled
                     foreach ($bookings as $key => $booking) {
-                        $this->store_history($booking->passenger_id,0,$booking->schedule_id,$request->id,"Schedule cancelled",env('STATUS_CANCEL_ID'));
+                        $this->store_history($booking->passenger_id,0,$request->schedule_id,$booking->id,"Schedule cancelled",env('STATUS_CANCEL_ID'));
                     }
                 // END::store cancel history of booking because schedule is cancelled
 
             });
             if(is_null($exception)) {
-                return Response::json([
-                    'status'        => "success",
-                    'msg'           => "Schedule cancelled successfully",
-                    "data"          => []
-                ], 200);
+                return $this->returnResponse("success","Schedule cancelled successfully.",[], 200);
             } else {
                 throw new Exception;
             }
@@ -867,53 +871,42 @@ class MainController extends Controller
         
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Something went wrong.',
-                "data"      => []
-            ], 404);
+            return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
         }
     }
 
-    public function store_booking(MainRequest $request)
+    public function store_booking(MainRequest $request) // done
     {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "store_booking")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
         $schedule           = Schedule::where('schedules.id', $request->schedule_id)
                                 ->leftjoin('statuses', 'statuses.id', '=', 'schedules.status_id')                                
                                 ->select(
                                         'schedules.id',
+                                        'schedules.captain_id',
                                         'schedules.status_id',
                                         'schedules.vacant_seat',
                                         'statuses.name as status_name',
                                     )
                                 ->first();
 
-                                       
-        if ( empty($schedule) ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Invalid schedule id',
-                "data"      => []
-            ], 404);
-        }
-
-        if((isset($schedule->status_id))  && (($schedule->status_id) > 2)){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'You cannot schedule because captain '.($schedule->status_name),
-                "data"      => []
-            ], 404);
-        }
-
         $booking            = Booking::where('schedule_id', $schedule->id)
                                 ->where('status_id','!=', env('STATUS_CANCEL_ID')) //  cancelled
                                 ->sum('book_seat');
 
+        if((isset($schedule->status_id))  && (($schedule->status_id) > 2)){
+            $msg = 'You cannot schedule because captain '.($schedule->status_name);
+            return $this->returnResponse("failed","Validation errors",[ $msg], 404);
+        }
+
+        if(($schedule->captain_id) == ($request->people_id) ){
+            return $this->returnResponse("failed","Validation errors",["Captain cannot book his own drive"], 404);
+        }
+
         if ( (isset($schedule->vacant_seat)) && ( (($booking) >= ($schedule->vacant_seat)) || (($request->book_seat) > ($schedule->vacant_seat))  || ( ( ($request->book_seat) + ($booking) ) > ($schedule->vacant_seat) ) ) ){
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'No vacant seat available',
-                "data"      => []
-            ], 404);
+            return $this->returnResponse("failed","Validation errors",["No vacant seat available"], 404);
         }
 
         try {
@@ -930,11 +923,7 @@ class MainController extends Controller
                 $this->store_history($request->people_id,0,$request->schedule_id,$booking->id,null,1);
             });
             if(is_null($exception)) {
-                return Response::json([
-                    'status'        => "success",
-                    'msg'           => "Booking added successfully",
-                    "data"          => []
-                ], 200);
+                return $this->returnResponse("success","Booking added successfully.",[], 200);
             } else {
                 throw new Exception;
             }
@@ -942,17 +931,16 @@ class MainController extends Controller
         
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
-            // dd($e);
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Something went wrong.',
-                "data"      => []
-            ], 404);
+            return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
         }
     }
 
-    public function cancel_booking(MainRequest $request)
+    public function cancel_booking(MainRequest $request)  // done
     {
+
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "cancel_booking")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
 
         $record             = Booking::where('bookings.active',1)
                                 ->where('bookings.passenger_id',$request->people_id)
@@ -960,14 +948,9 @@ class MainController extends Controller
                                 ->where('bookings.status_id','<=',3)
                                 ->first();
                                 
-                        
         // is booking exist
-        if(empty($record)){
-            return Response::json([
-                                    'status'    => "failed",
-                                    'msg'       => 'No booking found.',
-                                    "data"      => []
-                                ], 404);
+        if(!(isset($record->id))){
+            return $this->returnResponse("failed","Validation errors",["No booking found."], 404);
         }
 
         try {
@@ -983,11 +966,7 @@ class MainController extends Controller
                 $this->store_history($request->people_id,0,$record->schedule_id,$request->booking_id,null,env('STATUS_CANCEL_ID'));
             });
             if(is_null($exception)) {
-                return Response::json([
-                    'status'        => "success",
-                    'msg'           => "Booking cancelled successfully",
-                    "data"          => []
-                ], 200);
+                return $this->returnResponse("success","Booking cancelled successfully.",[], 200);
             } else {
                 throw new Exception;
             }
@@ -995,15 +974,12 @@ class MainController extends Controller
         
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
-            return Response::json([
-                'status'    => "failed",
-                'msg'       => 'Something went wrong.',
-                "data"      => []
-            ], 404);
+            return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
         }
     }
 
-    public function count_schedules($captain_id){
+    public function count_schedules($captain_id) // done  --commented
+    {
 
         return  Schedule::where('schedules.active',1)
                         ->where('schedules.captain_id',$captain_id)
@@ -1011,7 +987,8 @@ class MainController extends Controller
                         ->count();
     }
     
-    public function count_bookings($schedule_id){
+    public function count_bookings($schedule_id) // done
+    {
 
         $seats      = Booking::where('bookings.schedule_id',$schedule_id)
                             ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
@@ -1020,7 +997,8 @@ class MainController extends Controller
         return    $seats;
     }
 
-    public function fetch_schedule_of_booking($schedule_id){
+    public function fetch_schedule_of_booking($schedule_id)   // done
+    {
         
         $schedule           = Schedule::where('schedules.active',1)
                                 ->where('schedules.id',$schedule_id)
@@ -1045,8 +1023,14 @@ class MainController extends Controller
 
     }
 
-    public function fetch_bookings(MainRequest $request, $inner_call = FALSE)
+    public function fetch_bookings(MainRequest $request, $inner_call = FALSE)  // done
     {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_bookings")) ){
+            if(!$inner_call){ // calling from api
+                return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+            }
+        }
+
         $bookings           = Booking::where('bookings.active',1)
                                 ->where('bookings.passenger_id',$request->people_id)
                                 ->where('bookings.status_id','<=',3)
@@ -1059,7 +1043,7 @@ class MainController extends Controller
         foreach ($bookings as $key => $booking) {
 
             $rating                         = People_rating::where('people_ratings.schedule_id',$booking->schedule_id)
-                                                ->avg('people_ratings.rating');
+                                                ->avg('people_ratings.rating_stars');
 
             $seats                          = Booking::where('bookings.schedule_id',$booking->schedule_id)
                                                 ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
@@ -1085,23 +1069,24 @@ class MainController extends Controller
 
         }
      
+
+        $data = ([ 'bookings' => $bookings]);
         if($inner_call){
-            return [
-                        'bookings' => $bookings
-                ];
+            return $data;
+        }else{
+            return $this->returnResponse("success","Bookings fetched for passenger successfully.",$data, 200);
         }
 
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Bookings fetched for passenger successfully",
-                                'data'          => [
-                                                        'bookings' => $bookings
-                                                ]
-                            ], 200);
     }
 
-    public function fetch_schedules(MainRequest $request, $inner_call = FALSE)
+    public function fetch_schedules(MainRequest $request, $inner_call = FALSE)  // done
     {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_schedules")) ){
+            if(!$inner_call){ // calling from api
+                return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+            }
+        }
+
         $record              = People::where('id', $request->people_id)->first();
 
         if(((ucfirst(strtolower($request->role)))) == "Captain"){
@@ -1138,11 +1123,10 @@ class MainController extends Controller
                                         )
                                 ->get();
 
-        $tot_schedules      = $this->count_schedules($request->people_id);
 
 
         foreach ($schedules as $key => $schedule) {
-            $rating     = People_rating::where('people_ratings.schedule_id',$schedule->schedule_id)->avg('people_ratings.rating');
+            $rating     = People_rating::where('people_ratings.schedule_id',$schedule->schedule_id)->avg('people_ratings.rating_stars');
             $seats      = Booking::where('bookings.schedule_id',$schedule->schedule_id)
                             ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
                             ->sum('book_seat');
@@ -1153,39 +1137,25 @@ class MainController extends Controller
             $schedules[$key]->rating        = round($rating);
         }
 
+        $data   = ([
+                    'schedules'     => $schedules,
+                    // 'tot_schedules' =>$this->count_schedules($request->people_id),
+                    'tot_schedules' => count($schedules)
+                ]);
+
         if($inner_call){
-            return [
-                        'schedules'     => $schedules,
-                        'tot_schedules' => $tot_schedules,
-                    ];
+            return $data;
+        }else{
+            return $this->returnResponse("success","Schedules fetched for captain successfully.",$data, 200);
+        }
+    }
+
+    public function fetch_schedule_by_people(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_schedule_by_people")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
         }
 
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Schedules fetched for captain successfully",
-                                'data'          => [
-                                                        'schedules'     => $schedules,
-                                                        'tot_schedules' => $tot_schedules,
-                                                ]
-                            ], 200);
-    }
-    
-    private function getaddress($lat,$lng)
-    {
-        $GOOGLE_API_KEY  = "AIzaSyDv_BD3VEJY5prw23hH7G1iaeoNfWdmkDk";
-
-        $url    = "https://maps.google.com/maps/api/geocode/json?key=".$GOOGLE_API_KEY."&latlng=".$lat.",".$lng."&sensor=false";
-        $json   = file_get_contents($url);
-        $data   = json_decode($json);
-
-        if(($data->status)=="OK")
-            return $data->results[0]->formatted_address;
-        else
-            return null;
-    }
-
-    public function fetch_schedule_by_people(MainRequest $request)
-    {
         $schedules  = Schedule::where('schedules.active',1)
                                 ->where('schedules.captain_id',$request->people_id)
                                 ->where('schedules.status_id','<=',3)
@@ -1230,23 +1200,22 @@ class MainController extends Controller
         }
 
        
+        $data   = ([
+                    'schedules' => $this->append_rating($schedules),
+                    // 'tot_schedules' =>$this->count_schedules($request->people_id),
+                    'tot_schedules' => count($schedules)
+                ]);
 
-        $schedules          = $this->append_rating($schedules);
-        $tot_schedules      = $this->count_schedules($request->people_id);
-
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Schedules fetched by people successfully",
-                                'data'          => [
-                                                        'schedules' => $schedules,
-                                                        'tot_schedules' => $tot_schedules
-                                                ]
-                            ], 200);
+        return $this->returnResponse("success","Schedules fetched by people successfully.",$data, 200);
     }
 
-    public function fetch_schedule_by_city(MainRequest $request)
+    public function fetch_schedule_by_city(MainRequest $request)  // done
     {
-        $schedules  = Schedule::where('schedules.active',1)
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_schedule_by_city")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+        
+        $schedules  = Schedule::where('schedules.active',1)->orderBy('schedules.id','DESC')
                                 // ->where('schedules.captain_id',$request->people_id)
                                 ->where('schedules.pickup_city_id',$request->pickup_city_id)
                                 ->where('schedules.dropoff_city_id',$request->dropoff_city_id)
@@ -1284,22 +1253,25 @@ class MainController extends Controller
             $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
         }
 
-        $schedules          = $this->append_rating($schedules);
-        $tot_schedules      = $this->count_schedules($request->people_id);
 
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Schedules fetched by city successfully",
-                                'data'          => [
-                                                        'schedules'     => $schedules,
-                                                        'tot_schedules' => $tot_schedules,
-                                                ]
-                            ], 200);
+        $data   = ([
+                    'schedules' => $this->append_rating($schedules),
+                    // 'tot_schedules' =>$this->count_schedules($request->people_id),
+                    'tot_schedules' => count($schedules)
+                ]);
+
+        return $this->returnResponse("success","Schedules fetched by city successfully.",$data, 200);
     }
 
-    public function fetch_schedule_by_date(MainRequest $request)
+    public function fetch_schedule_by_date(MainRequest $request) // done  --not used in system
     {
-        $schedules  = Schedule::where('schedules.active',1)
+
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_schedule_by_date")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+
+        $schedules  = Schedule::where('schedules.active',1)->orderBy('schedules.id','DESC')
                                 // ->where('schedules.captain_id',$request->people_id)
                                 ->where('schedules.pickup_city_id',$request->pickup_city_id)
                                 ->where('schedules.dropoff_city_id',$request->dropoff_city_id)
@@ -1339,29 +1311,34 @@ class MainController extends Controller
             $schedules[$key]->booked_seat    = (isset($seats)) ? ((int)$seats) : 0;
             $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
         }
+        
+        $data   = ([
+                    'schedules' => $this->append_rating($schedules),
+                    // 'tot_schedules' =>$this->count_schedules($request->people_id),
+                    'tot_schedules' => count($schedules)
+                ]);
 
-        $schedules          = $this->append_rating($schedules);
-        $tot_schedules      = $this->count_schedules($request->people_id);
+        return $this->returnResponse("success","Schedules fetched by date successfully.",$data, 200);
 
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Schedules fetched by date successfully",
-                                'data'          => [
-                                                        'schedules' => $schedules,
-                                                        'tot_schedules' => $tot_schedules
-                                                ]
-                            ], 200);
     }
 
-    public function fetch_schedule_by_time(MainRequest $request)
+    public function fetch_schedule_by_time(MainRequest $request) // done
     {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_schedule_by_time")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
         
-        $end_time   = \Carbon\Carbon::createFromFormat('H', $request->end_time);
-        $start_time = \Carbon\Carbon::createFromFormat('H', $request->start_time);
-        $start_date = \Carbon\Carbon::createFromFormat('Y-m-d', $request->start_date);
-        $end_date   = \Carbon\Carbon::createFromFormat('Y-m-d', $request->end_date);
+        $end_time   = Carbon::createFromFormat('H', $request->end_time);
+        $start_time = Carbon::createFromFormat('H', $request->start_time);
+        // $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->toDateTimeString();
+        // $end_date   = Carbon::createFromFormat('Y-m-d', $request->end_date);
+        
+        $end_time    = Carbon::parse($end_time)->format('H:i');
+        $start_time  = Carbon::parse($start_time)->format('H:i');
+        $end_date    = Carbon::parse($request->end_date)->format('Y-m-d');
+        $start_date  = Carbon::parse($request->start_date)->format('Y-m-d');
 
-        $schedules  = Schedule::where('schedules.active',1)
+        $schedules  = Schedule::where('schedules.active',1)->orderBy('schedules.id','DESC')
                                 // ->where('schedules.captain_id',$request->people_id)
                                 ->where('schedules.pickup_city_id',$request->pickup_city_id)
                                 ->where('schedules.dropoff_city_id',$request->dropoff_city_id)
@@ -1379,6 +1356,7 @@ class MainController extends Controller
                                         'schedules.fare',
                                         'schedules.vacant_seat',
                                         'schedules.schedule_date',
+                                        'schedules.schedule_time',
                                         
                                         'schedules.start_time',
                                         'schedules.end_time',
@@ -1399,15 +1377,15 @@ class MainController extends Controller
                                         DB::raw('CONCAT(schedules.dropoff_address,  ",  ", d_city.name) as dropoff_address'),
                                     )
                                 ->get();
-
+        // dd($schedules);
         $sh                 = array();
         
         foreach ($schedules as $key => $value) {
             $schdle_id  = $value->schedule_id;
             $bkings     = $this->count_bookings($schdle_id);
-            if( ($value->vacant_seat)  > $bkings ){
+            // if( ($value->vacant_seat)  > $bkings ){  // un-comment it, if you want to NOT to show those rides whose all seat are  booked
                 array_push($sh,$value);
-            }
+            // }
         }
 
         foreach ($schedules as $key => $schedule) {
@@ -1419,21 +1397,21 @@ class MainController extends Controller
             $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
         }
         
-        $schedules          = $this->append_rating($sh);
-        $tot_schedules      = $this->count_schedules($request->people_id);
+        $data   = ([
+            'schedules'     => $this->append_rating($sh),
+            'tot_schedules' => count($sh)
+            // 'tot_schedules' =>$this->count_schedules($request->people_id),
+        ]);
 
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Schedules fetched by time successfully",
-                                'data'          => [
-                                                        'schedules' => $sh,
-                                                        'tot_schedules' => $tot_schedules
-                                                ]
-                            ], 200);
+        return $this->returnResponse("success","Schedules fetched by time successfully.",$data, 200);
     }
 
-    public function fetch_cancel_reasons()
+    public function fetch_cancel_reasons(MainRequest $request) // done
     {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_cancel_reasons")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
         $reasons      = Reason::orderBy('id')
                             ->select(
                                         'id as reason_id',
@@ -1442,27 +1420,30 @@ class MainController extends Controller
                             ->where('active',1)
                             ->get();
 
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Reason fetched successfully",
-                                "data"          => [
-                                                    'reasons' =>  $reasons
-                                                ]
-                            ], 200);
+        $data   = (['reasons' =>  $reasons]);
+
+        return $this->returnResponse("success","Reason fetched successfully.",$data, 200);
+
     }
     
-    public function append_rating($schedules){
+    // append rating index to an array
+    public function append_rating($schedules)  // done
+    {
        
         foreach ($schedules as $key => $schedule) {
-            $rating                     = People_rating::where('people_ratings.schedule_id',$schedule->schedule_id)->avg('people_ratings.rating');
+            $rating                     = People_rating::where('people_ratings.schedule_id',$schedule->schedule_id)->avg('people_ratings.rating_stars');
             $schedules[$key]->rating    = round($rating);
         }
 
         return $schedules;
     }
 
-    public function fetch_ratings()
+    public function fetch_ratings(MainRequest $request)  // done
     {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_ratings")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+        
         $ratings      = Rating::orderBy('id')
                             ->select(
                                         'id as rating_id',
@@ -1473,33 +1454,330 @@ class MainController extends Controller
                             ->where('active',1)
                             ->get();
 
-        return Response::json([
-                                'status'        => "success",
-                                'msg'           => "Rating fetched successfully",
-                                "data"          => [
-                                                    'ratings' =>  $ratings
-                                                ]
-                            ], 200);
+                            
+        $data   = (['ratings' =>  $ratings]);
+        return $this->returnResponse("success","Rating fetched successfully.",$data, 200);
+    }
+
+    public function store_ratings(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "store_ratings")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        // BEGIN :: Captain cannot rating his own ride
+            $schdl      = Schedule::where('schedules.active',1)
+                            ->where('schedules.id',$request->schedule_id)
+                            ->where('schedules.captain_id',$request->people_id)
+                            ->first();
+
+            if(isset($schdl->id)){
+                return $this->returnResponse("failed","Validation errors",["Captain cannot rate his own ride"], 404);
+            }
+        // END :: Captain cannot rating his own ride
+
+
+        // BEGIN :: Passenger cannot rate twice the same ride
+            $ppl_rtng   = People_rating::where('people_ratings.active',1)
+                            ->where('people_ratings.schedule_id',$request->schedule_id)
+                            ->where('people_ratings.passenger_id',$request->people_id)
+                            ->first();
+
+            if(isset($ppl_rtng->id)){
+                return $this->returnResponse("failed","Validation errors",["One booking cannot be rated twice by same user"], 404);
+            }
+        // END :: Passenger cannot rate twice the same ride
+
+
+        // BEGIN :: Passenger cannot rate twice the same ride
+            $bkngs      = Booking::where('bookings.active',1)
+                            ->where('bookings.schedule_id',$request->schedule_id)
+                            ->where('bookings.passenger_id',$request->people_id)
+                            ->where('status_id','=', env('STATUS_CANCEL_ID')) // cancelled ride can not be rated
+                            ->first();
+
+            if(isset($ppl_rtng->id)){
+                return $this->returnResponse("failed","Validation errors",["You cannot the rate non-booked or cancelled ride"], 404);
+            }
+        // END :: Passenger cannot rate twice the same ride
+
+
+
+        // checking valid index (s)
+        if( isset($request->rating_stars) && (count($request->rating_stars) > 0)){
+            foreach ($request->rating_stars as $rtng_id => $rating_star) {
+                $rtng = Rating::where('id', $rtng_id)->first();
+                if(!isset($rtng->id)){
+                    $msg = $rtng_id . " is invalid rating index.";
+                    return $this->returnResponse("failed","Validation errors",[$msg], 404);
+                }
+            }
+        }else{
+            return $this->returnResponse("failed","Validation errors",["Rating stars field is required."], 404);
+        }
+
+        try {
+            // Transaction
+            $exception = DB::transaction(function()  use ($request) {
+                        
+                $schdl = Schedule::where('schedules.active',1)->select('schedules.captain_id')
+                                ->where('schedules.id',$request->schedule_id)
+                                ->first();
+
+                foreach ($request->rating_stars as $rtng_id => $rating_star) {
+                    $ppl_rtng               = new People_rating;
+                    $ppl_rtng->captain_id   = isset($schdl->captain_id) ? $schdl->captain_id : 0;
+                    $ppl_rtng->schedule_id  = isset($request->schedule_id) ? $request->schedule_id : 0;
+                    $ppl_rtng->passenger_id = isset($request->people_id) ? $request->people_id : 0;
+                    $ppl_rtng->rating_id    = isset($rtng_id) ? $rtng_id : 0;
+                    $ppl_rtng->rating_stars = isset($rating_star) ? $rating_star : 0;
+                    $ppl_rtng->save();
+                }
+               
+            });
+            if(is_null($exception)) {
+                return $this->returnResponse("success","Ratings stored successfully.",[], 200);
+            } else {
+                throw new Exception;
+            }
+        }
+        
+        catch(\Exception $e) {
+            app('App\Http\Controllers\MailController')->send_exception($e);
+            return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
+        }
+    }
+
+    private function count_all_bkngs($schedule_id) // done 
+    {
+        $record             = Booking::where('bookings.active',1)
+                                ->where('bookings.schedule_id',$schedule_id)
+                                ->count();  
+        return $record;
+    }
+
+    private function count_cmpltd_cncld_bkngs($schedule_id) // done
+    {
+        $record             = Booking::where('bookings.active',1)
+                                ->where('bookings.schedule_id',$schedule_id)
+                                ->where('bookings.status_id','>',3) // 4: completed and 5: canceled
+                                ->count();  
+        return $record;
+    }
+
+    private function count_incmpltd_bkngs($schedule_id) // done
+    {
+        $record             = Booking::where('bookings.active',1)
+                                ->where('bookings.schedule_id',$schedule_id)
+                                ->where('bookings.status_id','<=',3) // 1: scheduled, 2: Waiting, 3: On the way
+                                ->count();  
+        return $record;
+    }
+    
+    public function mark_booking_complete(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "mark_booking_complete")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        $record             = Booking::where('bookings.active',1)
+                                ->where('bookings.passenger_id',$request->people_id)
+                                ->where('bookings.id',$request->booking_id)
+                                ->where('bookings.status_id','<=',3)
+                                ->first();
+
+       
+                                
+        // is booking exist
+        if(!(isset($record->id))){
+            return $this->returnResponse("failed","Validation errors",["No booking found."], 404);
+        }
+
+        try {
+            // Transaction
+            $exception = DB::transaction(function()  use ($request,$record) {
+
+                // BEGIN::update mark booking to complete
+                    $input                      = $request->all();
+                    $input['status_id']         = 4; // completed 
+                                                  $record->update($input);
+                // END::update mark booking to complete
+                $this->store_history($request->people_id,0,$record->schedule_id,$request->booking_id,null,4);
+
+
+                // BEGIN :: Schdule Complete
+                    $cmpltd_cncld_bkngs = isset($record->schedule_id) ? $this->count_cmpltd_cncld_bkngs($record->schedule_id) : 0;
+                    $count_all_bkngs    = isset($record->schedule_id) ? $this->count_all_bkngs($record->schedule_id) : 0;
+                    // $incmpltd_bkngs     = isset($record->schedule_id) ? $this->count_incmpltd_bkngs($record->schedule_id) : 0;
+                
+                    // mark the schedule completed.
+                    if($cmpltd_cncld_bkngs >= $count_all_bkngs){
+                        $schdl   = Schedule::where('id',$record->schedule_id)->first();
+                        $schdl->update(['status_id' => 4]); // schedule completed
+                        $cptn_id = isset($schdl->captain_id) ? $schdl->captain_id : 0;
+                        $this->store_history($cptn_id,1,$record->schedule_id,null,null,4);  // store the schedule compeletion history
+                    }
+
+                // END :: Schedule Completed
+            });
+            if(is_null($exception)) {
+                return $this->returnResponse("success","Booking marked as completed successfully.",[], 200);
+            } else {
+                throw new Exception;
+            }
+        }
+        
+        catch(\Exception $e) {
+            app('App\Http\Controllers\MailController')->send_exception($e);
+            return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
+        }
+    }
+
+
+    protected function fetch_schedules_history(Request $request)
+    {
+
+        $records     = History::orderBy('histories.created_at')
+                        ->select('id', 'people_id','schedule_id','booking_id','detail','status_id', 'type')
+                        ->whereNotNull('schedule_id')
+                        ->whereNull('booking_id')
+                        ->where('type', 1)  // type: 1  = Captain
+                        ->where('people_id', $request->people_id)
+                        ->where('status_id', 4) // completed 
+                        ->get();
+
+        foreach ($records as $key => $record) {
+            $records[$key]->cap_name        = isset($record->schedule->captain->fname) ? ($record->schedule->captain->fname) : "";
+            $records[$key]->make            = isset($record->schedule->vehicle->make) ? ($record->schedule->vehicle->make) : "";
+            $records[$key]->modal           = isset($record->schedule->vehicle->modal) ? ($record->schedule->vehicle->modal) : "";
+            $records[$key]->vacant_seat     = isset($record->schedule->vacant_seat) ? ($record->schedule->vacant_seat) : "";
+            $records[$key]->pickup_address  = isset($record->schedule->pickup_address) ? ($record->schedule->pickup_address) : "";
+            $records[$key]->dropoff_address = isset($record->schedule->dropoff_address) ? ($record->schedule->dropoff_address) : "";
+            $records[$key]->schedule_date   = isset($record->schedule->schedule_date) ? ($record->schedule->schedule_date) : "";
+            $records[$key]->start_time      = isset($record->schedule->start_time) ? ($record->schedule->start_time) : "";
+            $records[$key]->end_time        = isset($record->schedule->end_time) ? ($record->schedule->end_time) : "";
+            $records[$key]->ride_fare       = isset($record->schedule->fare) ? ($record->schedule->fare) : "";
+            $records[$key]->status_name     = isset($record->status->name) ? ($record->status->name) : "";
+            $records[$key]->ride_distance   = "";
+            $records[$key]->comment         = " --- No Comments --- ";
+            $records[$key]->capt_rating     = People_rating::where('people_ratings.schedule_id',$record->schedule->id)->avg('people_ratings.rating_stars');
+            
+            if(isset($records[$key]->schedule) ){
+                unset($records[$key]->schedule);
+            }
+
+            if(isset($records[$key]->status) ){
+                unset($records[$key]->status);
+            }
+        }
+
+
+        return $records;
+
+    }
+
+    protected function fetch_bookings_history(Request $request)
+    {
+        $records     = History::orderBy('histories.created_at')
+                        ->select('id', 'people_id','schedule_id','booking_id','detail','status_id', 'type')
+                        ->whereNotNull('schedule_id')
+                        ->whereNotNull('booking_id')
+                        ->where('type', 0)  // type: 0  = Passenger
+                        ->where('people_id', $request->people_id)
+                        ->where('status_id', 4) // completed 
+                        ->get();
+
+        foreach ($records as $key => $record) {
+            $records[$key]->cap_name        = isset($record->schedule->captain->fname) ? ($record->schedule->captain->fname) : "";
+            $records[$key]->make            = isset($record->schedule->vehicle->make) ? ($record->schedule->vehicle->make) : "";
+            $records[$key]->modal           = isset($record->schedule->vehicle->modal) ? ($record->schedule->vehicle->modal) : "";
+            $records[$key]->vacant_seat     = isset($record->schedule->vacant_seat) ? ($record->schedule->vacant_seat) : "";
+            $records[$key]->pickup_address  = isset($record->schedule->pickup_address) ? ($record->schedule->pickup_address) : "";
+            $records[$key]->dropoff_address = isset($record->schedule->dropoff_address) ? ($record->schedule->dropoff_address) : "";
+            $records[$key]->schedule_date   = isset($record->schedule->schedule_date) ? ($record->schedule->schedule_date) : "";
+            $records[$key]->start_time      = isset($record->schedule->start_time) ? ($record->schedule->start_time) : "";
+            $records[$key]->end_time        = isset($record->schedule->end_time) ? ($record->schedule->end_time) : "";
+            $records[$key]->ride_fare       = isset($record->schedule->fare) ? ($record->schedule->fare) : "";
+            $records[$key]->status_name     = isset($record->status->name) ? ($record->status->name) : "";
+            $records[$key]->ride_distance   = "";
+            $records[$key]->comment         = " --- No Comments --- ";
+            
+            if(isset($records[$key]->schedule) ){
+                unset($records[$key]->schedule);
+            }
+
+            if(isset($records[$key]->status) ){
+                unset($records[$key]->status);
+            }
+        }
+
+        return $records;
+    }
+
+    public function fetch_ride_history(MainRequest $request) // done
+    {
+        if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_ride_history")) ){
+            return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
+        }
+
+        $record              = People::where('id', $request->people_id)->first();
+        if(($record->type  != "Captain") && ((ucfirst($request->role)) == "Captain") ){
+            return $this->returnResponse("failed","Validation errors",["Passenger can't be toggled to captain."], 404);
+
+        }else if(( (ucfirst(strtolower($request->role))) != "Passenger")  && ((ucfirst(strtolower($request->role))) != "Captain")){
+            return $this->returnResponse("failed","Validation errors",["Invalid toggle value."], 404);
+
+        }else{
+            // BEGIN::update role of people from passenger to captain or vice versa
+                $rec['role'] = ((((ucfirst(strtolower($request->role)))) == "Passenger") ? 0 : 1 ); // 1: captain and 0: passenger
+                // $record->update($rec);
+            // END::update role of people from passenger to captain or vice versa
+
+            $type_flg = "schedules";
+            if( $rec['role'] == 1 ){
+                $records    = $this->fetch_schedules_history($request);
+            }else{
+                $type_flg = "bookings";
+                $records    = $this->fetch_bookings_history($request);
+            }
+            
+       
+
+            $msg                 = "Role toggled & ".$type_flg." history fetched successfully";
+            $status              = "success";
+            $code                = 200;
+            $data                = ['records' => $records];
+           
+            return $this->returnResponse("success",$msg,$data, $code);
+        }
+
+
     }
     
     public function logout()
     {
         $record         = request()->user(); 
-       
         if($record){
-
             // Revoke current user token
             $record->tokens()->where('id', $record->currentAccessToken()->id)->delete();
-            return Response::json([
-                                    'status'  => "success",
-                                    'data'   => "logout successfully"
-                                ], 200);
+            return $this->returnResponse("success","logout successfully.",[], 200);
         }else{
-            return Response::json([
-                                    'status'    => "failed",
-                                    'msg'       => 'token not found',
-                                ], 404);
+            return $this->returnResponse("failed","Validation errors",["Token not found."], 404);
         }
+    }
+
+    private function getaddress($lat,$lng) // not used in system
+    {
+        $GOOGLE_API_KEY  = "AIzaSyDv_BD3VEJY5prw23hH7G1iaeoNfWdmkDk";
+
+        $url    = "https://maps.google.com/maps/api/geocode/json?key=".$GOOGLE_API_KEY."&latlng=".$lat.",".$lng."&sensor=false";
+        $json   = file_get_contents($url);
+        $data   = json_decode($json);
+
+        if(($data->status)=="OK")
+            return $data->results[0]->formatted_address;
+        else
+            return null;
     }
 }
 

@@ -67,8 +67,8 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "toggle_role") ){
             $con    =   [
-                            'people_id'         => 'required|numeric|exists:people,id',
-                            'role'              => 'required',
+                            'people_id'     => 'required|numeric|exists:people,id',
+                            'role'          => 'required',
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_password") ){
@@ -77,24 +77,30 @@ class MainRequest extends FormRequest
                             'password'      => 'required|min:8',
                         ];
             return $con; 
+        }else if((isset($this->action)) && (($this->action) == "fetch_ride_history") ){
+            $con    =   [
+                            'people_id'     => 'required|numeric|exists:people,id',
+                            'role'          => 'required',
+                        ];
+            return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_schedule") ){
             $con    =   [
-                            'people_id'         => 'required|numeric|min:1',
-                            'vehicle_id'        => 'required|numeric|min:1',
+                            'people_id'         => 'required|numeric|min:1|exists:people,id',
+                            'vehicle_id'        => 'required|numeric|min:1|exists:people_vehicles,id',
 
-                            'pickup_city_id'    => 'required|numeric|min:1',
-                            'pickup_area_id'    => 'required|numeric|min:1',
+                            'pickup_city_id'    => 'required|numeric|min:1|exists:cities,id',
+                            'pickup_area_id'    => 'required|numeric|min:1|exists:areas,id',
                             // 'pickup_lat'        => 'required|numeric',
                             // 'pickup_lng'        => 'required|numeric',
                             'pickup_address'    => 'required|min:3',
 
-                            'dropoff_city_id'   => 'required|numeric',
-                            'dropoff_area_id'   => 'required|numeric|min:1',
+                            'dropoff_city_id'   => 'required|numeric|exists:cities,id',
+                            'dropoff_area_id'   => 'required|numeric|min:1|exists:areas,id',
                             // 'dropoff_lat'       => 'required|numeric',
                             // 'dropoff_lng'       => 'required|numeric',
                             'dropoff_address'   => 'required|min:3',
 
-                            'schedule_date'     => 'required|date',
+                            'schedule_date'     => "required|date|after_or_equal:".date('Y-m-d'),
                             'schedule_time'     => 'required|date_format:H:i',
 
                             'vacant_seat'       => 'required|numeric|min:1',
@@ -103,69 +109,82 @@ class MainRequest extends FormRequest
                             'show_contact'      => 'required',
                         ];
             return $con; 
+        }else if((isset($this->action)) && (($this->action) == "cancel_schedule") ){
+            $con    =   [
+                            'people_id'         => 'required|numeric|min:1|exists:people,id',
+                            'schedule_id'       => 'required|numeric|min:1|exists:schedules,id',
+                        ];
+            return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_booking") ){
             $con    =   [
-                            'people_id'         => 'required|numeric',
-                            'schedule_id'       => 'required|numeric',
+                            'people_id'         => 'required|numeric|min:1|exists:people,id',
+                            'schedule_id'       => 'required|numeric|min:1|exists:schedules,id',
                             'book_seat'         => 'required|numeric|min:1',
                             'arrangment'        => 'min:3',
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "cancel_booking") ){
             $con    =   [
-                            'people_id'         => 'required|numeric',
-                            'booking_id'        => 'required|numeric'
+                            'people_id'         => 'required|numeric|min:1|exists:people,id',
+                            'booking_id'        => 'required|numeric|min:1|exists:bookings,id',
                         ];
             return $con; 
-        }else if((isset($this->action)) && (($this->action) == "cancel_schedule") ){
+        }else if((isset($this->action)) && (($this->action) == "mark_booking_complete") ){
             $con    =   [
-                            'people_id'         => 'required|numeric'
+                            'people_id'         => 'required|numeric|min:1|exists:people,id',
+                            'booking_id'        => 'required|numeric|min:1|exists:bookings,id',
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_schedules") ){
             $con    =   [
-                            'people_id'         => 'required|numeric'
+                            'people_id'         => 'required|numeric|min:1|exists:people,id'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_bookings") ){
             $con    =   [
-                            'people_id'         => 'required|numeric'
+                            'people_id'         => 'required|numeric|min:1|exists:people,id'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_schedule_by_people") ){
             $con    =   [
-                            'people_id'         => 'required|numeric'
+                            'people_id'         => 'required|numeric|min:1|exists:people,id'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_schedule_by_city") ){
             $con    =   [
-                            'pickup_city_id'    => 'required|numeric',
-                            'dropoff_city_id'   => 'required|numeric'
+                            'pickup_city_id'    => 'required|numeric|min:1|exists:cities,id',
+                            'dropoff_city_id'   => 'required|numeric|exists:cities,id'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_schedule_by_date") ){
             $con    =   [
-                            'pickup_city_id'    => 'required|numeric',
-                            'dropoff_city_id'   => 'required|numeric',
-                            'schedule_date'     => 'required|date',
+                            
+                            'pickup_city_id'    => 'required|numeric|min:1|exists:cities,id',
+                            'dropoff_city_id'   => 'required|numeric|exists:cities,id',
+                            'schedule_date'     => 'required|date'
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_schedule_by_time") ){
             $con    =   [
-                            'pickup_city_id'    => 'required|numeric',
-                            'dropoff_city_id'   => 'required|numeric',
+                            'pickup_city_id'    => 'required|numeric|min:1|exists:cities,id',
+                            'dropoff_city_id'   => 'required|numeric|exists:cities,id',
                             'start_time'        => 'required|date_format:H',
-                            'end_time'          => 'required|date_format:H',
+                            'end_time'          => 'required|date_format:H|after_or_equal:start_time',
                             'start_date'        => 'required|date_format:Y-m-d',
-                            'end_date'          => 'required|date_format:Y-m-d',
+                            'end_date'          => 'required|date_format:Y-m-d|after_or_equal:start_date',
                         ];
             return $con; 
-        }
-        else if((isset($this->action)) && (($this->action) == "fetch_ratings") ){
+        }else if((isset($this->action)) && (($this->action) == "store_ratings") ){
             $con    =   [
-                            'name'     => 'required',
-                            'star'     => 'required',
-                            'comment'  => 'required'
+                            'people_id'         => 'required|numeric|min:1|exists:people,id',
+                            'schedule_id'       => 'required|numeric|min:1|exists:schedules,id',
+                            "rating_stars"      => "required|array|min:1",
+                            "rating_stars.*"    => "required|numeric|min:0",
+                        ];
+            return $con; 
+        }else if((isset($this->action)) && (($this->action) == "fetch_ratings") ){
+            $con    =   [
+                            // validation
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "update_profile") ){
@@ -252,20 +271,28 @@ class MainRequest extends FormRequest
     {
         return [
             'fname.required'        => 'Full name is required',
-            'fname.min'             => 'Full name must be 3 character long!',
-            'fname.regex'           => 'Full name must not have special characters!',
+            'fname.min'             => 'Full name must be 3 character long.',
+            'fname.regex'           => 'Full name must not have special characters.',
 
-            'contact_no.required'   => 'Contact number is required!',
-            'contact_no.numeric'    => 'Contact number must be numeric!',
-            'contact_no.digits'     => 'Contact number must have 11 digits!',
-            'contact_no.unique'     => 'Contact number has already been taken!',
+            'contact_no.required'   => 'Contact number is required.',
+            'contact_no.numeric'    => 'Contact number must be numeric.',
+            'contact_no.digits'     => 'Contact number must have 11 digits.',
+            'contact_no.unique'     => 'Contact number has already been taken.',
 
-            'password.required'     => 'Password field is required!',
-            'password.min'          => 'Password must be 8 character long!',
-            'role.required'         => 'Role is required use value i.e. Captain, Passenger!',
+            'password.required'     => 'Password field is required.',
+            'password.min'          => 'Password must be 8 character long.',
+            'role.required'         => 'Role is required use value i.e. Captain, Passenger.',
 
-            'id.required'           => 'Vehicle id is required',
-            'temp_code.exists'       => 'Unable to find the user'
+            
+            'temp_code.exists'      => 'User not found.',
+            'people_id.exists'      => 'User not found.',
+            'schedule_id.exists'    => 'Schedule not found.',
+            'vehicle_id.exists'     => 'Vehicle not found.',
+            'pickup_city_id.exists' => 'Pickup city not found.',
+            'pickup_area_id.exists' => 'Pickup area not found.',
+            'dropoff_city_id.exists' => 'Dropoff city not found.',
+            'dropoff_area_id.exists' => 'Dropoff area not found.'
+            
 
             
         ];
