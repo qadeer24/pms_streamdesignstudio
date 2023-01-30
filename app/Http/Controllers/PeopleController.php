@@ -154,7 +154,7 @@ class PeopleController extends Controller
                 ->editColumn('rating', function ($request) {
                     $cde = null; 
                     for($i=0; $i<5; $i++){
-                        if($i < ($request->rating))
+                        if($i < ($request->rating_stars))
                             $cde .= '<i class="fa fa-star text-warning" ></i>';
                         else
                             $cde .= '<i class="fa fa-star" ></i>';
@@ -351,7 +351,7 @@ class PeopleController extends Controller
     {
         $data       = People::findorFail($id);
         $detail     = People_detail::where('people_id',$id)->first();
-        $ratings    = round(People_rating::where('captain_id',$id)->avg('rating'));
+        $ratings    = round(People_rating::where('captain_id',$id)->avg('rating_stars'));
         $vehicles   = People_vehicle::where('people_id',$id)->get();
         $bookings   = Booking::where('passenger_id', $id)->count();
         $schedules  = Schedule::where('captain_id', $id)->count();
