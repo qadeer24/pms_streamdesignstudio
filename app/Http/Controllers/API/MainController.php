@@ -321,7 +321,7 @@ class MainController extends Controller
         $detail              = People_detail::where('people_id', $record->id)->first();
         $vehicle             = People_vehicle::where('people_id', $record->id)->first();
 
-        if (isset($detail->id) ){
+        if (isset($detail->license_no) ){
             return $this->returnResponse("failed","Validation errors",["Details are already added."], 404);
         }
 
@@ -335,11 +335,20 @@ class MainController extends Controller
                     $record->update($rec);
                 // END::update type of people from passenger to captain to create the ride
 
-                // BEGIN::store detail in people_details table
-                    $input                = $request->all();
-                    $input['people_id']   = $record->id;
-                    $rec                  = People_detail::create($input);
-                // END::store detail in people_details table
+
+                 // if details already exists (profile_pic) but not liencse etc
+                $input                = $request->all();
+                $input['people_id']   = $record->id;
+                if (isset($detail->id) ) {
+                    $detail->update($input);
+                } else {
+                    // BEGIN::store detail in people_details table
+                        $rec                  = People_detail::create($input);
+                    // END::store detail in people_details table
+                }
+
+
+
 
                 if( (array_key_exists("tax_pic",$input)) && (!empty($input['tax_pic']))  ){
 
@@ -356,9 +365,9 @@ class MainController extends Controller
                                               $image->move(public_path("uploads/taxes"),$input['tax_pic']);
                 }
 
-                // BEGIN::store detail in people_details table
+                // BEGIN::store detail in people_vehicles table
                     $rec                = People_vehicle::create($input);
-                // END::store detail in people_details table
+                // END::store detail in people_vehicles table
 
             });
 
