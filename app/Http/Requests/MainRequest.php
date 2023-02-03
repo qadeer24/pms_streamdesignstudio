@@ -176,10 +176,14 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_ratings") ){
             $con    =   [
-                            'people_id'         => 'required|numeric|min:1|exists:people,id',
-                            'schedule_id'       => 'required|numeric|min:1|exists:schedules,id',
-                            "rating_stars"      => "required|array|min:1",
-                            "rating_stars.*"    => "required|numeric|min:0",
+                            'people_id'                 => 'required|numeric|min:1|exists:people,id',
+                            'schedule_id'               => 'required|numeric|min:1|exists:schedules,id',
+                            "rating_stars"              => "required|array|min:1",
+                            "rating_stars.*"            => "required|numeric|min:0",
+                            // "cap_ratings"               => "required",
+                            // 'cap_ratings.*.rating_id'   => 'required',
+                            // 'cap_ratings.*.rating_star' => 'required',
+
                         ];
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "fetch_ratings") ){
