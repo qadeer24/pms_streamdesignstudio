@@ -1729,7 +1729,10 @@ class MainController extends Controller
             return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
         }
 
+
         $record              = People::where('id', $request->people_id)->first();
+        $role                =  ((((ucfirst(strtolower($request->role)))) == "Passenger") ? "Passenger" : "Captain" ); 
+        
         if(($record->type  != "Captain") && ((ucfirst($request->role)) == "Captain") ){
             return $this->returnResponse("failed","Validation errors",["Passenger can't be toggled to captain."], 404);
 
@@ -1755,7 +1758,10 @@ class MainController extends Controller
             $msg                 = "Role toggled & ".$type_flg." history fetched successfully";
             $status              = "success";
             $code                = 200;
-            $data                = ['records' => $records];
+            $data                = [
+                                        'role'      => $role,
+                                        'records'   => $records
+                                    ];
            
             return $this->returnResponse("success",$msg,$data, $code);
         }
