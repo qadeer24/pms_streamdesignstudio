@@ -30,6 +30,7 @@ class MainRequest extends FormRequest
             return $con; 
         }else if((isset($this->action)) && (($this->action) == "store_details") ){
             $con    =   [
+                            'people_id'               => 'required|numeric|exists:people,id',
                             'cnic'                    => 'required|digits:13|numeric|exists:people,cnic',
                             'address'                 => 'required|min:3',
                             'license_no'              => 'required|min:3',
@@ -195,7 +196,7 @@ class MainRequest extends FormRequest
             $con    =   [ 
                             'contact_no'    => 'required|digits:11|numeric|exists:people,contact_no',
                             'fname'         => 'required',
-                            'email'         => 'required',
+                            'email'         => 'required|unique:people_details,email',
                         //   'profile_pic'   => 'required',
                         ];
 

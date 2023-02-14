@@ -317,7 +317,11 @@ class MainController extends Controller
             return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
         }
 
-        $record              = People::where('cnic', $request->cnic)->first();
+        $record              = People::where('cnic', $request->cnic)->where('id',$request->people_id)->first();
+        if (!isset($record->id) ){
+            return $this->returnResponse("failed","Validation errors",["User not found."], 404);
+        }
+
         $detail              = People_detail::where('people_id', $record->id)->first();
         $vehicle             = People_vehicle::where('people_id', $record->id)->first();
 
