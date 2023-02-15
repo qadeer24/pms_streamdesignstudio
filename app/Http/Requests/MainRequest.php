@@ -196,7 +196,8 @@ class MainRequest extends FormRequest
             $con    =   [ 
                             'contact_no'    => 'required|digits:11|numeric|exists:people,contact_no',
                             'fname'         => 'required',
-                            'email'         => 'required|unique:people_details,email',
+                            // 'email'         => ['required', 'email', Rule::unique('people_details')->ignore($this->people)],
+                            'email'         => 'required|email:rfc,dns',
                         //   'profile_pic'   => 'required',
                         ];
 

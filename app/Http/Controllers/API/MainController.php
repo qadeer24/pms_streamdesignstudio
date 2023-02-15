@@ -449,6 +449,13 @@ class MainController extends Controller
         $record             = People::where('contact_no', $request->contact_no)->first();
         $record_details     = People_detail::where('people_id', $record->id)->first();
 
+        if((isset($request->email)) && ((isset($record->id)))){
+            $rd     = People_detail::where('people_id','!=', $record->id)->where('email', $request->email)->first();
+            if(isset($rd->id)){
+                return $this->returnResponse("failed","Validation errors",["Email is already used."], 404);
+            }
+        }
+
         // BEGIN :: checking is password valid 
         if(isset($request->old_password)){
 
