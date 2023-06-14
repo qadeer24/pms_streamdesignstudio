@@ -1,0 +1,1757 @@
+{
+	"info": {
+		"_postman_id": "77be8ba3-796f-4fbd-b53a-e7e38f35ae4f",
+		"name": "HighWay App",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10764647",
+		"_collection_link": "https://www.postman.com/aquib20034/workspace/geeksroot/collection/10764647-77be8ba3-796f-4fbd-b53a-e7e38f35ae4f?action=share&creator=10764647&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "register",
+									"type": "text"
+								},
+								{
+									"key": "fname",
+									"value": "Muhammad Aquib",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "aquib20034@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "cnic",
+									"value": "4410306538088",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "rootroot",
+									"type": "text"
+								},
+								{
+									"key": "contact_no",
+									"value": "03139120000",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/register",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify_otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "verify_otp",
+									"type": "text"
+								},
+								{
+									"key": "otp",
+									"value": "{{otp}}",
+									"type": "text"
+								},
+								{
+									"key": "temp_code",
+									"value": "{{temp_code}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/verify_otp",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"verify_otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "login",
+									"type": "text"
+								},
+								{
+									"key": "contact_no",
+									"value": "03139120000",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "rootroot",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/login",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "forgot",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "forgot",
+									"type": "text"
+								},
+								{
+									"key": "contact_no",
+									"value": "03139120000",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/forgot",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"forgot"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "logout",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/logout",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "forgot_otp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "forgot_otp",
+									"type": "text"
+								},
+								{
+									"key": "otp",
+									"value": "1582",
+									"type": "text"
+								},
+								{
+									"key": "temp_code",
+									"value": "1886427977",
+									"type": "text"
+								},
+								{
+									"key": "contact_no",
+									"value": "03139120000",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/forgot_otp",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"forgot_otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "update_password",
+									"type": "text"
+								},
+								{
+									"key": "temp_code",
+									"value": "{{temp_code}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "rootroot",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/update_password",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"update_password"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "General",
+			"item": [
+				{
+					"name": "store_details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "store_details",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"type": "text"
+								},
+								{
+									"key": "cnic",
+									"value": "4410306538088",
+									"type": "text"
+								},
+								{
+									"key": "address",
+									"value": "test address",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "rootroot",
+									"type": "text"
+								},
+								{
+									"key": "license_no",
+									"value": "12345",
+									"type": "text"
+								},
+								{
+									"key": "age",
+									"value": "24",
+									"type": "text"
+								},
+								{
+									"key": "make",
+									"value": "civic",
+									"type": "text"
+								},
+								{
+									"key": "modal",
+									"value": "2011",
+									"type": "text"
+								},
+								{
+									"key": "car_year",
+									"value": "2017",
+									"type": "text"
+								},
+								{
+									"key": "color",
+									"value": "red",
+									"type": "text"
+								},
+								{
+									"key": "seat",
+									"value": "4",
+									"type": "text"
+								},
+								{
+									"key": "dob",
+									"value": "1997-05-16",
+									"type": "text"
+								},
+								{
+									"key": "expire_date",
+									"value": "2024-05-08",
+									"description": "license expiry date",
+									"type": "text"
+								},
+								{
+									"key": "vehicle_registration",
+									"value": "HDA-234",
+									"type": "text"
+								},
+								{
+									"key": "tax_pic",
+									"type": "file",
+									"src": "/E:/Images/icon/aquib.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/store_details",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"store_details"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "update_profile",
+									"type": "text"
+								},
+								{
+									"key": "contact_no",
+									"value": "03139120000",
+									"description": "provide contact_no on which profile is created.",
+									"type": "text"
+								},
+								{
+									"key": "fname",
+									"value": "Muhammad Aquib Shaikh",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "aquib20000@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "profile_pic",
+									"type": "file",
+									"src": "/E:/Images/icon/images (1).jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/update_profile",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"update_profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "toggle_role",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "toggle_role",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"type": "text"
+								},
+								{
+									"key": "role",
+									"value": "Captain",
+									"description": "Captain | Passenger",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/toggle_role",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"toggle_role"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_ride_history",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_ride_history",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"type": "text"
+								},
+								{
+									"key": "role",
+									"value": "Captain",
+									"description": "Captain | Passenger",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_ride_history",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_ride_history"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_provinces",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_provinces",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_provinces",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_provinces"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_cities",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_cities",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_cities",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_cities"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_cancel_reasons",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_cancel_reasons",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_cancel_reasons",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_cancel_reasons"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Schedules",
+			"item": [
+				{
+					"name": "store_schedule",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "store_schedule",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"description": "captain id",
+									"type": "text"
+								},
+								{
+									"key": "vehicle_id",
+									"value": "33",
+									"type": "text"
+								},
+								{
+									"key": "pickup_city_id",
+									"value": "{{pickup_city_id}}",
+									"type": "text"
+								},
+								{
+									"key": "pickup_area_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "pickup_address",
+									"value": "Main Road",
+									"type": "text"
+								},
+								{
+									"key": "dropoff_city_id",
+									"value": "{{dropoff_city_id}}",
+									"type": "text"
+								},
+								{
+									"key": "dropoff_area_id",
+									"value": "5",
+									"type": "text"
+								},
+								{
+									"key": "dropoff_address",
+									"value": "Near Maji Hospital",
+									"type": "text"
+								},
+								{
+									"key": "schedule_date",
+									"value": "{{schedule_date}}",
+									"type": "text"
+								},
+								{
+									"key": "schedule_time",
+									"value": "06:35",
+									"type": "text"
+								},
+								{
+									"key": "vacant_seat",
+									"value": "4",
+									"type": "text"
+								},
+								{
+									"key": "fare",
+									"value": "1500",
+									"type": "text"
+								},
+								{
+									"key": "show_contact",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/store_schedule",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"store_schedule"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "cancel_schedule",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "cancel_schedule",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"description": "captain id",
+									"type": "text"
+								},
+								{
+									"key": "schedule_id",
+									"value": "{{schedule_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/cancel_schedule",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"cancel_schedule"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_schedules",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_schedules",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"description": "captain Id",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_schedules",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_schedules"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_schedule_by_people",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_schedule_by_people",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"description": "captain Id",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_schedule_by_people",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_schedule_by_people"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_schedule_by_city",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_schedule_by_city",
+									"type": "text"
+								},
+								{
+									"key": "pickup_city_id",
+									"value": "{{pickup_city_id}}",
+									"type": "text"
+								},
+								{
+									"key": "dropoff_city_id",
+									"value": "{{dropoff_city_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_schedule_by_city",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_schedule_by_city"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_schedule_by_date",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_schedule_by_date",
+									"type": "text"
+								},
+								{
+									"key": "pickup_city_id",
+									"value": "{{pickup_city_id}}",
+									"type": "text"
+								},
+								{
+									"key": "dropoff_city_id",
+									"value": "{{schedule_id}}",
+									"type": "text"
+								},
+								{
+									"key": "schedule_date",
+									"value": "{{schedule_date}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_schedule_by_date",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_schedule_by_date"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_schedule_by_time",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_schedule_by_time",
+									"type": "text"
+								},
+								{
+									"key": "pickup_city_id",
+									"value": "{{pickup_city_id}}",
+									"type": "text"
+								},
+								{
+									"key": "dropoff_city_id",
+									"value": "{{dropoff_city_id}}",
+									"type": "text"
+								},
+								{
+									"key": "start_time",
+									"value": "06",
+									"description": "provide hours only",
+									"type": "text"
+								},
+								{
+									"key": "end_time",
+									"value": "07",
+									"description": "provide hours only",
+									"type": "text"
+								},
+								{
+									"key": "start_date",
+									"value": "2023-06-14",
+									"type": "text"
+								},
+								{
+									"key": "end_date",
+									"value": "2023-06-20",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_schedule_by_time",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_schedule_by_time"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bookings",
+			"item": [
+				{
+					"name": "store_booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "store_booking",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{passenger_id}}",
+									"type": "text"
+								},
+								{
+									"key": "schedule_id",
+									"value": "{{schedule_id}}",
+									"type": "text"
+								},
+								{
+									"key": "book_seat",
+									"value": "2",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/store_booking",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"store_booking"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "cancel_booking",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "cancel_booking",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{passenger_id}}",
+									"type": "text"
+								},
+								{
+									"key": "booking_id",
+									"value": "{{booking_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/cancel_booking",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"cancel_booking"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_bookings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_bookings",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{passenger_id}}",
+									"description": "Passenger Id",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_bookings",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_bookings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "mark_booking_complete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "mark_booking_complete",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{passenger_id}}",
+									"description": "passenger id",
+									"type": "text"
+								},
+								{
+									"key": "booking_id",
+									"value": "{{booking_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/mark_booking_complete",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"mark_booking_complete"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Ratings",
+			"item": [
+				{
+					"name": "fetch_ratings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_ratings",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_ratings",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_ratings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "store_ratings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "store_ratings",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{passenger_id}}",
+									"description": "passenger id",
+									"type": "text"
+								},
+								{
+									"key": "schedule_id",
+									"value": "42",
+									"type": "text"
+								},
+								{
+									"key": "rating_stars[1]",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "rating_stars[2]",
+									"value": "3",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/store_ratings",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"store_ratings"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Vehicles",
+			"item": [
+				{
+					"name": "fetch_people_vehicle",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_people_vehicle",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"description": "captain id",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_people_vehicle",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_people_vehicle"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "store_people_vehicle",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "store_people_vehicle",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "{{captain_id}}",
+									"description": "Captain Id",
+									"type": "text"
+								},
+								{
+									"key": "vehicle_registration",
+									"value": "KHI-256",
+									"type": "text"
+								},
+								{
+									"key": "make",
+									"value": "HONDA",
+									"type": "text"
+								},
+								{
+									"key": "modal",
+									"value": "70",
+									"type": "text"
+								},
+								{
+									"key": "car_year",
+									"value": "2003",
+									"type": "text"
+								},
+								{
+									"key": "color",
+									"value": "Red",
+									"type": "text"
+								},
+								{
+									"key": "seat",
+									"value": "3",
+									"type": "text"
+								},
+								{
+									"key": "tax_pic",
+									"type": "file",
+									"src": "/E:/Images/icon/businessman-png-icon-1.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/store_people_vehicle",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"store_people_vehicle"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update_people_vehicle",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "update_people_vehicle",
+									"type": "text"
+								},
+								{
+									"key": "vehicle_id",
+									"value": "33",
+									"type": "text"
+								},
+								{
+									"key": "vehicle_registration",
+									"value": "KHI-896",
+									"type": "text"
+								},
+								{
+									"key": "make",
+									"value": "HONDA",
+									"type": "text"
+								},
+								{
+									"key": "modal",
+									"value": "70",
+									"type": "text"
+								},
+								{
+									"key": "car_year",
+									"value": "2003",
+									"type": "text"
+								},
+								{
+									"key": "color",
+									"value": "Red",
+									"type": "text"
+								},
+								{
+									"key": "seat",
+									"value": "3",
+									"type": "text"
+								},
+								{
+									"key": "tax_pic",
+									"type": "file",
+									"src": "/E:/Images/icon/игрок-png-3.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/update_people_vehicle",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"update_people_vehicle"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Chat",
+			"item": [
+				{
+					"name": "get_recent_people",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "get_recent_people",
+									"type": "text"
+								},
+								{
+									"key": "people_id",
+									"value": "3",
+									"description": "Captain  id | Passenger id",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/get_recent_people",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"get_recent_people"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "send_message",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "send_message",
+									"type": "text"
+								},
+								{
+									"key": "sender_name",
+									"value": "Muhammad Aquib",
+									"type": "text"
+								},
+								{
+									"key": "sender_id",
+									"value": "{{captain_id}}",
+									"type": "text"
+								},
+								{
+									"key": "receiver_id",
+									"value": "{{passenger_id}}",
+									"type": "text"
+								},
+								{
+									"key": "message",
+									"value": "test",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/send_message",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"send_message"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fetch_messages",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "action",
+									"value": "fetch_messages",
+									"type": "text"
+								},
+								{
+									"key": "sender_id",
+									"value": "{{captain_id}}",
+									"type": "text"
+								},
+								{
+									"key": "receiver_id",
+									"value": "{{passenger_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{site_url}}/fetch_messages",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"fetch_messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_captain_details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{site_url}}/get_captain_details/{{captain_id}}",
+							"host": [
+								"{{site_url}}"
+							],
+							"path": [
+								"get_captain_details",
+								"{{captain_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

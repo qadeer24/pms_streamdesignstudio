@@ -71,7 +71,7 @@ class MainController extends Controller
 
         // appending +92 with contact_no
         $cno = $this->set_contact_no($request->contact_no);
-        
+
         // send sms using Twilio
         // (new TwilioSMSController)->index($cno, $otp);
         (new NotificationController)->send_otp($cno, $otp);
@@ -79,7 +79,7 @@ class MainController extends Controller
         $data               = array();
         $data['temp_code']  = $temp_code;
         return $this->returnResponse("success","OTP sent.",$data, 200);
-       
+
     }
 
     public function login(MainRequest $request) // done
@@ -89,7 +89,7 @@ class MainController extends Controller
         }
 
         $record             = People::where('contact_no', $request->contact_no)->first();
-        
+
         // checking password
         if(!(Hash::check($request->password, $record->password))) {
             return $this->returnResponse("failed","Validation errors",["Invalid password."], 404);
@@ -98,7 +98,7 @@ class MainController extends Controller
 
         // otp will be sent to non-verified user.
         if($record->verified != 1) {
-       
+
             $input['otp']        = rand(1000, 9999);
             $input['temp_code']  = rand(1000000000, 9999999999);
                                    $record->update($input);
@@ -108,13 +108,13 @@ class MainController extends Controller
             // send sms using Twilio
             // (new TwilioSMSController)->index($cno, $input['otp']);
             (new NotificationController)->send_otp($cno, $input['otp']);
-            
+
             $data               = array();
             $data['temp_code']  = $input['temp_code'];
             return $this->returnResponse("success","OTP sent.",$data, 200);
         }
-       
-        // if above all condition 
+
+        // if above all condition
         // delete all previous tokens of this ID
         // $record->tokens()
         //         ->where('tokenable_id', $record->id)
@@ -124,7 +124,7 @@ class MainController extends Controller
 
         $data  = $this->return_login($request, $record);
         return $this->returnResponse("success","Logged in successfully.",$data, 200);
-       
+
 
     }
 
@@ -150,13 +150,13 @@ class MainController extends Controller
         if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "verify_otp")) ){
             return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
         }
-        
+
         ////// BEGIN :: un-comment when OTP apis purchased //////
         /* $record     = People::where('otp', $request->otp)
                             ->where('temp_code', $request->temp_code)
                             ->whereNull('forgot')
                             ->first();
-                            
+
         if ( (empty($record))  || $record->otp == null  ){
             return $this->returnResponse("failed","Validation errors",["Invalid OTP."], 404);
         } */
@@ -168,8 +168,8 @@ class MainController extends Controller
 
         if ( (!isset($record->id)) ){
             return $this->returnResponse("failed","Validation errors",["Invalid OTP."], 404);
-        } 
-        
+        }
+
         $data               = array();
         $data['otp']        = null;
         $data['verified']   = 1;
@@ -218,7 +218,7 @@ class MainController extends Controller
                             ->where('temp_code', $request->temp_code)
                             ->whereNotNull('forgot')
                             ->first();
-                            
+
         if ( (empty($record))  || ($record->otp == null)  || (!(isset($record->id))) ){
             return $this->returnResponse("failed","Validation errors",["Invalid OTP."], 404);
         } */
@@ -229,10 +229,10 @@ class MainController extends Controller
                             ->first();
 
                             // dd($record);
-                            
+
         if(!isset($record->id)){
             return $this->returnResponse("failed","Validation errors",["Invalid OTP."], 404);
-        } 
+        }
 
         $input               = array();
         $input['otp']        = null;
@@ -245,7 +245,7 @@ class MainController extends Controller
         $data              = array();
         $data['temp_code'] = $input['temp_code'];
         $data['name']      = "forgot_otp";
- 
+
         return $this->returnResponse("success","Forgot OTP verified.",$data, 200);
     }
 
@@ -280,7 +280,7 @@ class MainController extends Controller
         $status              = "failed";
 
         $record              = People::where('id', $request->people_id)->first();
-      
+
         if(($record->type  != "Captain") && ((ucfirst($request->role)) == "Captain") ){
             $msg              = "Passenger can't be toggled to captain";
 
@@ -298,12 +298,12 @@ class MainController extends Controller
             }else{
                 $records    = $this->fetch_bookings($request,true);
             }
-            
+
             $msg                 = "Role toggled successfully";
             $status              = "success";
             $code                = 200;
             $data                = ['records' => $records];
-           
+
         }
 
         return $this->returnResponse("success",$msg,$data, $code);
@@ -375,11 +375,11 @@ class MainController extends Controller
 
             });
 
-                
+
             if(is_null($exception)) {
 
                 $vehicle    = People_vehicle::where('people_id', $record->id)->first();
-                $vehicle_id = (isset($vehicle->id))? ($vehicle->id) :null ; 
+                $vehicle_id = (isset($vehicle->id))? ($vehicle->id) :null ;
 
                 $data       = ([
                                         'fname'         => $record->fname,
@@ -389,19 +389,19 @@ class MainController extends Controller
                                     ]);
 
                 return $this->returnResponse("success","Details added successfully.",$data, 200);
-              
+
             }else {
                 throw new Exception;
             }
         }
-        
+
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
             return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
 
         }
     }
-    
+
     // fetch provinces alongwith cities
     public function fetch_provinces() // done
     {
@@ -428,7 +428,7 @@ class MainController extends Controller
         return $this->returnResponse("success","Provinces fetched successfully.",$data, 200);
 
     }
-    
+
     // fetch cities only
     public function fetch_cities() // done
     {
@@ -456,7 +456,7 @@ class MainController extends Controller
             }
         }
 
-        // BEGIN :: checking is password valid 
+        // BEGIN :: checking is password valid
         if(isset($request->old_password)){
 
             if(!(isset($request->new_password))){
@@ -468,23 +468,23 @@ class MainController extends Controller
             }
         }
 
-        // END :: checking is password valid 
+        // END :: checking is password valid
 
 
         try {
             // Transaction
             $exception = DB::transaction(function()  use ($request,$record,$record_details,$token) {
-          
-                // update profile with or without password 
+
+                // update profile with or without password
                 if(isset($request->old_password)){
-                
+
                     // update fname and password
                     $record->update([
                         'fname'      => $request->fname,
                         'password'   => Hash::make($request->new_password),
                     ]);
-                    
-                   
+
+
                     // delete all previous tokens of this ID
                     $record->tokens()
                         ->where('tokenable_id', $record->id)
@@ -494,15 +494,15 @@ class MainController extends Controller
                 }else{
                     $record->update(['fname'  => ($request->fname)]);
                 }
-      
-                // input variables 
+
+                // input variables
                 $req                = $request->all();
-                $input              = $request->all();   
+                $input              = $request->all();
                 $req['people_id']   = $record->id;
 
                 // BEING :: uploading image
                 if( (array_key_exists("profile_pic",$input)) && (!empty($input['profile_pic']))  ){
-        
+
                     // delete the previous image
                     if(isset($record_details->profile_pic)){
                         if (file_exists( public_path('uploads/peoples/'.$record_details->profile_pic) )){
@@ -513,7 +513,7 @@ class MainController extends Controller
                     $image                  = $request->file('profile_pic');
                     $input['profile_pic']   = rand().'.'.$image->getClientOriginalExtension();
                                               $image->move(public_path("uploads/peoples"),$input['profile_pic']);
-        
+
 
                     // if details not exists
                     if ($record_details !== null) {
@@ -534,7 +534,7 @@ class MainController extends Controller
                     //     ['email'        => $request->email],
                     //     ['profile_pic'  => $input['profile_pic']]
                     // );
-                 
+
                 }else{
                     // People_detail::updateOrCreate(
                     //     ['people_id'    => $record->id],
@@ -552,14 +552,14 @@ class MainController extends Controller
                             'email'       => $request->email,
                         ]);
                     }
-                    
+
                 }
             });
 
-            
+
             if(is_null($exception)) {
                 // create new token for this ID
-                
+
                 $record_details     = People_detail::where('people_id', $record->id)->first();
                 $token              = (isset($request->old_password)) ? $record->createToken('people-token')->plainTextToken: null;
                 $pth                = ((isset($record_details->profile_pic))) ? ( "public/uploads/peoples/".($record_details->profile_pic)) : ("public/uploads/no_image.png");
@@ -587,20 +587,20 @@ class MainController extends Controller
                                         'profile_pic'   => $pth
                                     ]);
                     return $this->returnResponse("success","Profile updated successfully.",$data, 200);
-                    
+
                 }
             }else {
                 throw new Exception;
             }
         }
-        
+
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
             return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
             // return $this->returnResponse("failed","Validation errors",$e, 404);
         }
     }
-    
+
     // storing the detail of the people vechicle but not more than 3 vehicles
     public function store_people_vehicle(MainRequest $request) // done
     {
@@ -613,7 +613,7 @@ class MainController extends Controller
         if($people_vehicles >= 3){
             return $this->returnResponse("failed","Validation errors",["You already added 3 vehicles."], 404);
         }
-        
+
         $rcd                    = $request->all();
 
         if( (array_key_exists("tax_pic",$rcd)) && (!empty($rcd['tax_pic']))  ){
@@ -652,10 +652,10 @@ class MainController extends Controller
         }
 
         $pth                    = "public/uploads/no_image.png";
-        $record                 = $request->all();  
+        $record                 = $request->all();
         $people_vehicle         = People_vehicle::where('id',$request->vehicle_id)->first();
 
-       
+
         // uploading image
         if( (array_key_exists("tax_pic",$record)) && (!empty($record['tax_pic']))  ){
 
@@ -675,7 +675,7 @@ class MainController extends Controller
         $people_vehicle->update($record);
 
         if(isset($people_vehicle->tax_pic)){
-            $pth = "public/uploads/taxes/".($people_vehicle->tax_pic);  
+            $pth = "public/uploads/taxes/".($people_vehicle->tax_pic);
         }
 
         $data   = ([
@@ -710,26 +710,26 @@ class MainController extends Controller
                                             'seat',
                                             'active', // active: 1 OR active : 0
 
-                                            DB::raw('(CASE 
-                                                WHEN isNULL(people_vehicles.tax_pic) THEN "public/uploads/no_image.png" 
+                                            DB::raw('(CASE
+                                                WHEN isNULL(people_vehicles.tax_pic) THEN "public/uploads/no_image.png"
                                                 ELSE CONCAT("public/uploads/taxes/",people_vehicles.tax_pic)
                                                 END) AS tax_pic'
                                             )
-                                            
+
                                         )
                                     ->get();
-                            
+
         $tot_vehicle    = (count($people_vehicles));
-                                    
+
         if(count($people_vehicles) < 3){
             $people_vehicles = (count($people_vehicles) <1) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
         }
-        
+
         if(count($people_vehicles) > 0){
             // $people_vehicles = (count($people_vehicles) <=3) ?  $people_vehicles->push(((object) array("vehicle_id" => "0"))) : $people_vehicles;
             $data   = ([
                             'tot_vehicle'     => $tot_vehicle,
-                            'people_vehicles' =>  $people_vehicles 
+                            'people_vehicles' =>  $people_vehicles
                         ]);
 
             return $this->returnResponse("success","vehicle fetched by people successfully.",$data, 200);
@@ -739,7 +739,7 @@ class MainController extends Controller
         }
     }
 
-    // store the history of schedule 
+    // store the history of schedule
     public function store_history($people_id,$type,$schedule_id,$booking_id,$detail=null,$status_id)  // done
     {
         // BEGIN::store history
@@ -769,7 +769,7 @@ class MainController extends Controller
         $people_vehicle         = People_vehicle::where('id',$request->vehicle_id)
                                     ->select('seat')
                                     ->first();
-        
+
         $record                 = People::where('id', $request->people_id)
                                     ->where('type', 1) // 1: captain
                                     ->first();
@@ -785,7 +785,7 @@ class MainController extends Controller
             return $this->returnResponse("failed","Validation errors",["Vehicle seat not found."], 404);
         }
 
-        
+
         if ( ($request->vacant_seat) > ($people_vehicle->seat)  ){
             $msg = "You can't enter more than " . ($people_vehicle->seat) . " seats";
             return $this->returnResponse("failed","Validation errors",[$msg], 404);
@@ -820,7 +820,7 @@ class MainController extends Controller
                 throw new Exception;
             }
         }
-        
+
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
             return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
@@ -839,7 +839,7 @@ class MainController extends Controller
                                 ->where('schedules.id',$request->schedule_id)
                                 ->where('schedules.status_id','<=',3)
                                 ->first();
-                                
+
         // is schedule exist
         if (!(isset($record->id)) ){
             return $this->returnResponse("failed","Validation errors",["No schedule found."], 404);
@@ -850,7 +850,7 @@ class MainController extends Controller
 
                 // BEGIN::update schedule to cancel
                     $input                      = $request->all();
-                    $input['status_id']         = env('STATUS_CANCEL_ID'); 
+                    $input['status_id']         = env('STATUS_CANCEL_ID');
                                                   $record->update($input);
                 // END::update schedule to cancel
 
@@ -858,14 +858,14 @@ class MainController extends Controller
                     $this->store_history($request->people_id,1,$request->schedule_id,null,null,env('STATUS_CANCEL_ID'));
                 // END::store cancel schedule history
 
-                
+
                 // BEGIN::fetch all bookings against this schedule id
                     $bookings           = Booking::where('bookings.active',1)
                                             ->where('bookings.schedule_id',$request->schedule_id)
                                             ->where('bookings.status_id','<=',3)
                                             ->get();
                 // END::fetch all bookings against this schedule id
-               
+
 
                 // BEGIN::cancel all bookings against this schedule id
                     $upd                = Booking::where('bookings.active',1)
@@ -888,7 +888,7 @@ class MainController extends Controller
                 throw new Exception;
             }
         }
-        
+
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
             return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
@@ -902,7 +902,7 @@ class MainController extends Controller
         }
 
         $schedule           = Schedule::where('schedules.id', $request->schedule_id)
-                                ->leftjoin('statuses', 'statuses.id', '=', 'schedules.status_id')                                
+                                ->leftjoin('statuses', 'statuses.id', '=', 'schedules.status_id')
                                 ->select(
                                         'schedules.id',
                                         'schedules.captain_id',
@@ -948,7 +948,7 @@ class MainController extends Controller
                 throw new Exception;
             }
         }
-        
+
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
             return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
@@ -967,7 +967,7 @@ class MainController extends Controller
                                 ->where('bookings.id',$request->booking_id)
                                 ->where('bookings.status_id','<=',3)
                                 ->first();
-                                
+
         // is booking exist
         if(!(isset($record->id))){
             return $this->returnResponse("failed","Validation errors",["No booking found."], 404);
@@ -979,7 +979,7 @@ class MainController extends Controller
 
                 // BEGIN::update schedule to cancel
                     $input                      = $request->all();
-                    $input['status_id']         = env('STATUS_CANCEL_ID'); 
+                    $input['status_id']         = env('STATUS_CANCEL_ID');
                                                   $record->update($input);
                 // END::update schedule to cancel
 
@@ -991,7 +991,7 @@ class MainController extends Controller
                 throw new Exception;
             }
         }
-        
+
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
             return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
@@ -1006,20 +1006,20 @@ class MainController extends Controller
                         ->where('schedules.status_id','<=',3)
                         ->count();
     }
-    
+
     public function count_bookings($schedule_id) // done
     {
 
         $seats      = Booking::where('bookings.schedule_id',$schedule_id)
                             ->where('bookings.status_id','!=',env('STATUS_CANCEL_ID'))  //cancelled
                             ->sum('book_seat');
-                            
+
         return    $seats;
     }
 
     public function fetch_schedule_of_booking($schedule_id)   // done
     {
-        
+
         $schedule           = Schedule::where('schedules.active',1)
                                 ->where('schedules.id',$schedule_id)
                                 // ->where('schedules.status_id','<=',3)
@@ -1059,7 +1059,7 @@ class MainController extends Controller
                                             'bookings.schedule_id as schedule_id',
                                         )
                                 ->get();
-                                
+
         foreach ($bookings as $key => $booking) {
 
             $rating                         = People_rating::where('people_ratings.schedule_id',$booking->schedule_id)
@@ -1072,7 +1072,7 @@ class MainController extends Controller
             // $bookings[$key]->vacant_seat    = (($booking->vacant_seat) -  $seats);
             $bookings[$key]->rating         = round($rating);
 
-            
+
             $schdl                          = $this->fetch_schedule_of_booking($bookings[$key]->schedule_id );
 
             $bookings[$key]->fare           = (isset($schdl->fare)) ? $schdl->fare : 0;
@@ -1088,7 +1088,7 @@ class MainController extends Controller
             $bookings[$key]->modal          = (isset($schdl->modal)) ? $schdl->modal : null;
 
         }
-     
+
 
         $data = ([ 'bookings' => $bookings]);
         if($inner_call){
@@ -1126,14 +1126,14 @@ class MainController extends Controller
                                             'schedules.id as schedule_id',
                                             'schedules.fare',
                                             'schedules.vacant_seat',
-                                            
+
                                             'people.fname as cap_name',
 
                                             'people_vehicles.make',
                                             'people_vehicles.modal',
                                             'people_details.profile_pic',
-                                            DB::raw('(CASE 
-                                                WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                            DB::raw('(CASE
+                                                WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png"
                                                 ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
                                                 END) AS profile_pic'
                                             ),
@@ -1186,7 +1186,7 @@ class MainController extends Controller
                                 ->leftjoin('cities as d_city', 'd_city.id', '=', 'schedules.dropoff_city_id')
                                 ->select(
                                         'schedules.id as schedule_id',
-                                        
+
                                         'schedules.fare',
 
                                         'schedules.vacant_seat',
@@ -1194,13 +1194,13 @@ class MainController extends Controller
                                         'schedules.pickup_lng',
                                         'schedules.dropoff_lat',
                                         'schedules.dropoff_lng',
-                                        
+
                                         'people.fname as cap_name',
 
                                         'people_vehicles.make',
                                         'people_vehicles.modal',
-                                        DB::raw('(CASE 
-                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                        DB::raw('(CASE
+                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png"
                                             ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
                                             END) AS profile_pic'
                                         ),
@@ -1219,7 +1219,7 @@ class MainController extends Controller
             $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
         }
 
-       
+
         $data   = ([
                     'schedules' => $this->append_rating($schedules),
                     // 'tot_schedules' =>$this->count_schedules($request->people_id),
@@ -1234,7 +1234,7 @@ class MainController extends Controller
         if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_schedule_by_city")) ){
             return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
         }
-        
+
         $schedules  = Schedule::where('schedules.active',1)->orderBy('schedules.id','DESC')
                                 // ->where('schedules.captain_id',$request->people_id)
                                 ->where('schedules.pickup_city_id',$request->pickup_city_id)
@@ -1253,8 +1253,8 @@ class MainController extends Controller
 
                                         'people_vehicles.make',
                                         'people_vehicles.modal',
-                                        DB::raw('(CASE 
-                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                        DB::raw('(CASE
+                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png"
                                             ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
                                             END) AS profile_pic'
                                         ),
@@ -1307,13 +1307,13 @@ class MainController extends Controller
                                         'schedules.id as schedule_id',
                                         'schedules.fare',
                                         'schedules.vacant_seat',
-                                        
+
                                         'people.fname as cap_name',
 
                                         'people_vehicles.make',
                                         'people_vehicles.modal',
-                                        DB::raw('(CASE 
-                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                        DB::raw('(CASE
+                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png"
                                             ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
                                             END) AS profile_pic'
                                         ),
@@ -1331,7 +1331,7 @@ class MainController extends Controller
             $schedules[$key]->booked_seat    = (isset($seats)) ? ((int)$seats) : 0;
             $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
         }
-        
+
         $data   = ([
                     'schedules' => $this->append_rating($schedules),
                     // 'tot_schedules' =>$this->count_schedules($request->people_id),
@@ -1347,12 +1347,12 @@ class MainController extends Controller
         if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_schedule_by_time")) ){
             return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
         }
-        
+
         $end_time   = Carbon::createFromFormat('H', $request->end_time);
         $start_time = Carbon::createFromFormat('H', $request->start_time);
         // $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->toDateTimeString();
         // $end_date   = Carbon::createFromFormat('Y-m-d', $request->end_date);
-        
+
         $end_time    = Carbon::parse($end_time)->format('H:i');
         $start_time  = Carbon::parse($start_time)->format('H:i');
         $end_date    = Carbon::parse($request->end_date)->format('Y-m-d');
@@ -1364,7 +1364,7 @@ class MainController extends Controller
                                 ->where('schedules.dropoff_city_id',$request->dropoff_city_id)
                                 ->whereBetween('schedules.schedule_date',[$start_date,$end_date])
                                 ->whereBetween('schedules.schedule_time',[$start_time,$end_time])
-                                ->where('schedules.status_id','<=',3) 
+                                ->where('schedules.status_id','<=',3)
                                 ->leftjoin('people', 'people.id', '=', 'schedules.captain_id')
                                 ->leftjoin('people_details', 'people_details.people_id', '=', 'people.id')
                                 ->leftjoin('people_vehicles', 'people_vehicles.id', '=', 'schedules.vehicle_id')
@@ -1377,18 +1377,18 @@ class MainController extends Controller
                                         'schedules.vacant_seat',
                                         'schedules.schedule_date',
                                         'schedules.schedule_time',
-                                        
+
                                         'schedules.start_time',
                                         'schedules.end_time',
                                         'schedules.start_date',
                                         'schedules.end_date',
-                                        
+
                                         'people.fname as cap_name',
 
                                         'people_vehicles.make',
                                         'people_vehicles.modal',
-                                        DB::raw('(CASE 
-                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png" 
+                                        DB::raw('(CASE
+                                            WHEN isNULL(people_details.profile_pic) THEN "public/uploads/no_image.png"
                                             ELSE CONCAT("public/uploads/peoples/",people_details.profile_pic)
                                             END) AS profile_pic'
                                         ),
@@ -1399,7 +1399,7 @@ class MainController extends Controller
                                 ->get();
         // dd($schedules);
         $sh                 = array();
-        
+
         foreach ($schedules as $key => $value) {
             $schdle_id  = $value->schedule_id;
             $bkings     = $this->count_bookings($schdle_id);
@@ -1416,7 +1416,7 @@ class MainController extends Controller
             $schedules[$key]->booked_seat    = (isset($seats)) ? ((int)$seats) : 0;
             $schedules[$key]->remaining_seat = (isset($schedule->vacant_seat)) ? (($schedule->vacant_seat) -  $seats) : 0;
         }
-        
+
         $data   = ([
             'schedules'     => $this->append_rating($sh),
             'tot_schedules' => count($sh)
@@ -1445,11 +1445,11 @@ class MainController extends Controller
         return $this->returnResponse("success","Reason fetched successfully.",$data, 200);
 
     }
-    
+
     // append rating index to an array
     public function append_rating($schedules)  // done
     {
-       
+
         foreach ($schedules as $key => $schedule) {
             $rating                     = People_rating::where('people_ratings.schedule_id',$schedule->schedule_id)->avg('people_ratings.rating_stars');
             $schedules[$key]->rating    = round($rating);
@@ -1463,7 +1463,7 @@ class MainController extends Controller
         if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "fetch_ratings")) ){
             return $this->returnResponse("failed","Validation errors",["The action field not matched."], 404);
         }
-        
+
         $ratings      = Rating::orderBy('id')
                             ->select(
                                         'id as rating_id',
@@ -1474,7 +1474,7 @@ class MainController extends Controller
                             ->where('active',1)
                             ->get();
 
-                            
+
         $data   = (['ratings' =>  $ratings]);
         return $this->returnResponse("success","Rating fetched successfully.",$data, 200);
     }
@@ -1539,7 +1539,7 @@ class MainController extends Controller
         try {
             // Transaction
             $exception = DB::transaction(function()  use ($request) {
-                        
+
                 $schdl = Schedule::where('schedules.active',1)->select('schedules.captain_id')
                                 ->where('schedules.id',$request->schedule_id)
                                 ->first();
@@ -1553,7 +1553,7 @@ class MainController extends Controller
                     $ppl_rtng->rating_stars = isset($rating_star) ? $rating_star : 0;
                     $ppl_rtng->save();
                 }
-               
+
             });
             if(is_null($exception)) {
                 return $this->returnResponse("success","Ratings stored successfully.",[], 200);
@@ -1561,18 +1561,18 @@ class MainController extends Controller
                 throw new Exception;
             }
         }
-        
+
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
             return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
         }
     }
 
-    private function count_all_bkngs($schedule_id) // done 
+    private function count_all_bkngs($schedule_id) // done
     {
         $record             = Booking::where('bookings.active',1)
                                 ->where('bookings.schedule_id',$schedule_id)
-                                ->count();  
+                                ->count();
         return $record;
     }
 
@@ -1581,7 +1581,7 @@ class MainController extends Controller
         $record             = Booking::where('bookings.active',1)
                                 ->where('bookings.schedule_id',$schedule_id)
                                 ->where('bookings.status_id','>',3) // 4: completed and 5: canceled
-                                ->count();  
+                                ->count();
         return $record;
     }
 
@@ -1590,10 +1590,10 @@ class MainController extends Controller
         $record             = Booking::where('bookings.active',1)
                                 ->where('bookings.schedule_id',$schedule_id)
                                 ->where('bookings.status_id','<=',3) // 1: scheduled, 2: Waiting, 3: On the way
-                                ->count();  
+                                ->count();
         return $record;
     }
-    
+
     public function mark_booking_complete(MainRequest $request) // done
     {
         if( (!(isset( $request->action ))) || ((isset( $request->action )) && ( $request->action != "mark_booking_complete")) ){
@@ -1606,8 +1606,8 @@ class MainController extends Controller
                                 ->where('bookings.status_id','<=',3)
                                 ->first();
 
-       
-                                
+
+
         // is booking exist
         if(!(isset($record->id))){
             return $this->returnResponse("failed","Validation errors",["No booking found."], 404);
@@ -1619,7 +1619,7 @@ class MainController extends Controller
 
                 // BEGIN::update mark booking to complete
                     $input                      = $request->all();
-                    $input['status_id']         = 4; // completed 
+                    $input['status_id']         = 4; // completed
                                                   $record->update($input);
                 // END::update mark booking to complete
                 $this->store_history($request->people_id,0,$record->schedule_id,$request->booking_id,null,4);
@@ -1629,7 +1629,7 @@ class MainController extends Controller
                     $cmpltd_cncld_bkngs = isset($record->schedule_id) ? $this->count_cmpltd_cncld_bkngs($record->schedule_id) : 0;
                     $count_all_bkngs    = isset($record->schedule_id) ? $this->count_all_bkngs($record->schedule_id) : 0;
                     // $incmpltd_bkngs     = isset($record->schedule_id) ? $this->count_incmpltd_bkngs($record->schedule_id) : 0;
-                
+
                     // mark the schedule completed.
                     if($cmpltd_cncld_bkngs >= $count_all_bkngs){
                         $schdl   = Schedule::where('id',$record->schedule_id)->first();
@@ -1646,7 +1646,7 @@ class MainController extends Controller
                 throw new Exception;
             }
         }
-        
+
         catch(\Exception $e) {
             app('App\Http\Controllers\MailController')->send_exception($e);
             return $this->returnResponse("failed","Validation errors",["Something went wrong."], 404);
@@ -1663,7 +1663,7 @@ class MainController extends Controller
                         ->whereNull('booking_id')
                         ->where('type', 1)  // type: 1  = Captain
                         ->where('people_id', $request->people_id)
-                        ->where('status_id', 4) // completed 
+                        ->where('status_id', 4) // completed
                         ->get();
 
         foreach ($records as $key => $record) {
@@ -1681,7 +1681,7 @@ class MainController extends Controller
             $records[$key]->ride_distance   = "";
             $records[$key]->comment         = " --- No Comments --- ";
             $records[$key]->capt_rating     = People_rating::where('people_ratings.schedule_id',$record->schedule->id)->avg('people_ratings.rating_stars');
-            
+
             if(isset($records[$key]->schedule) ){
                 unset($records[$key]->schedule);
             }
@@ -1704,7 +1704,7 @@ class MainController extends Controller
                         ->whereNotNull('booking_id')
                         ->where('type', 0)  // type: 0  = Passenger
                         ->where('people_id', $request->people_id)
-                        ->where('status_id', 4) // completed 
+                        ->where('status_id', 4) // completed
                         ->get();
 
         foreach ($records as $key => $record) {
@@ -1721,7 +1721,7 @@ class MainController extends Controller
             $records[$key]->status_name     = isset($record->status->name) ? ($record->status->name) : "";
             $records[$key]->ride_distance   = "";
             $records[$key]->comment         = " --- No Comments --- ";
-            
+
             if(isset($records[$key]->schedule) ){
                 unset($records[$key]->schedule);
             }
@@ -1742,8 +1742,8 @@ class MainController extends Controller
 
 
         $record              = People::where('id', $request->people_id)->first();
-        $role                =  ((((ucfirst(strtolower($request->role)))) == "Passenger") ? "Passenger" : "Captain" ); 
-        
+        $role                =  ((((ucfirst(strtolower($request->role)))) == "Passenger") ? "Passenger" : "Captain" );
+
         if(($record->type  != "Captain") && ((ucfirst($request->role)) == "Captain") ){
             return $this->returnResponse("failed","Validation errors",["Passenger can't be toggled to captain."], 404);
 
@@ -1763,8 +1763,8 @@ class MainController extends Controller
                 $type_flg = "bookings";
                 $records    = $this->fetch_bookings_history($request);
             }
-            
-       
+
+
 
             $msg                 = "Role toggled & ".$type_flg." history fetched successfully";
             $status              = "success";
@@ -1773,16 +1773,16 @@ class MainController extends Controller
                                         'role'      => $role,
                                         'records'   => $records
                                     ];
-           
+
             return $this->returnResponse("success",$msg,$data, $code);
         }
 
 
     }
-    
+
     public function logout()
     {
-        $record         = request()->user(); 
+        $record         = request()->user();
         if($record){
             // Revoke current user token
             $record->tokens()->where('id', $record->currentAccessToken()->id)->delete();
@@ -1806,5 +1806,3 @@ class MainController extends Controller
             return null;
     }
 }
-
-
