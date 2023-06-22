@@ -25,8 +25,7 @@ use App\Events\Message;
     Route::post("verify_otp",[MainController::class, 'verify_otp']);  //done
     Route::post("forgot",[MainController::class, 'forgot']);  //done
     Route::post("forgot_otp",[MainController::class, 'forgot_otp']);  //done
-
-
+    Route::post("update_password",[MainController::class, 'update_password']);  //done
 
 
     Route::group(['middleware' => 'auth:sanctum'], function(){
@@ -62,7 +61,7 @@ use App\Events\Message;
 
         // Route::get("chart/{captain_id}",[CaptainController::class, 'charts']);
 
-        Route::post("update_password",[MainController::class, 'update_password']);  //done
+        // Route::post("update_password",[MainController::class, 'update_password']);  //done
         Route::post("toggle_role",[MainController::class, 'toggle_role']);  //done
         Route::post("update_profile",[MainController::class, 'update_profile']);
         Route::post("logout",[MainController::class, 'logout']);
