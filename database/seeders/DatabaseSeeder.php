@@ -10,14 +10,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             UserSeeder::class,
-            CitySeeder::class,
-            Complaint_tagSeeder::class,
-            Payment_methodSeeder::class,
-            RatingSeeder::class,
-            ReasonSeeder::class,
-            StatusSeeder::class,
-            ProvinceSeeder::class,
-            AreaSeeder::class
+            CategorySeeder::class,
         ]);
     }
 }

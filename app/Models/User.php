@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Carbon\Carbon;
 
 class User extends Authenticatable
 {
@@ -20,8 +21,11 @@ class User extends Authenticatable
         'password',
         'contact_no',
         'description',
+        'invited_by',
         'profile_pic',
+        'pin_code',
         'active',
+        'session_status',
         'created_by',
         'updated_by'
     ];
@@ -42,8 +46,18 @@ class User extends Authenticatable
         return ($value == 1) ? "Active" : "Inactive";
     }
 
+    public function getCreatedAtAttribute($date)
+    {
+        return Carbon::createFromFormat('Y-m-d H:i:s', $date)->format('M d, Y');
+    }
+
     public function getNameAttribute($value)
     {
         return ucwords($value);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'comment_by');
     }
 }

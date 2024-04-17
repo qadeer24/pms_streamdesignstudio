@@ -4,12 +4,18 @@ namespace App\Http\Controllers;
 use DB;
 use Hash;
 use Auth;
+use Illuminate\Support\Facades\Session;
 use DataTables;
 use App\Models\User;
+use App\Models\Permission;
+use Illuminate\Support\Facades\Validator;
+use App\Models\TeamMember;
 use Illuminate\Http\Request;
 use App\Http\Requests\UserRequest;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
+use Mail;
+use Exception;
 
 class UserController extends Controller
 {
@@ -24,46 +30,17 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        return view('users.index');
+        $permission     = Permission::get();
+        $roles          = Role::where('id','!=',1)->pluck('name','name')->all();
+        $member_roles   = Role::where('id','!=',1)->where('name','!=','Client')->pluck('name','name')->all();
+        if (Auth::user()->roles[0]->id == 1) {
+            $users = User::all();
+        }else{
+            $users = User::where('id',Auth::user()->id)->get();
+        }
+        return view('users.index',compact('users','permission','roles','member_roles'));
     }
 
-    public function list()
-    {
-        $data   = User::orderBy('name')
-                    ->leftjoin('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
-                    ->leftjoin('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                    ->select(
-                                'users.id',
-                                'users.name',
-                                'users.email',
-                                'users.active',
-                                'roles.name as rolename',
-                            )
-                    ->get();
-
-        return 
-            DataTables::of($data)
-                ->addColumn('action',function($data){
-                    return '
-                    <div class="btn-group btn-group">
-                        <a class="btn btn-info btn-xs" href="users/'.$data->id.'">
-                            <i class="fa fa-eye"></i>
-                        </a>
-                        <a class="btn btn-info btn-xs" href="users/'.$data->id.'/edit" id="'.$data->id.'">
-                            <i class="fas fa-pencil-alt"></i>
-                        </a>
-                        <button
-                            class="btn btn-danger btn-xs delete_all"
-                            data-url="'. url('del_user') .'" data-id="'.$data->id.'">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>';
-                })
-                ->addColumn('srno','')
-                ->rawColumns(['srno','','action'])
-                ->make(true);
-
-    }
     public function create()
     {
         $roles  = Role::where('id','!=',1)->pluck('name','name')->all();
@@ -91,11 +68,194 @@ class UserController extends Controller
 
         // store new entity
         $data                       = User::create($input);
-        
+
         // assign role 
         $data->assignRole($request->input('roles'));
 
         return response()->json(['success'=>$request['name']. ' added successfully.']);
+    }
+
+    // public function storeMember(UserRequest $request)
+    // {
+    //     try {
+    //         // Retrieve the validated input data...
+    //         $validated = $request->validated();
+
+    //         // get all request
+    //         $input = $request->all();
+
+    //         // uploading image
+    //         $new_name = "";
+    //         if(isset($request['member_img'])){
+    //             $image = $request->file('member_img');
+    //             $new_name = rand().'.'.$image->getClientOriginalExtension();
+    //             $image->move(public_path("uploads/users"),$new_name);
+    //             $input['member_img'] = $new_name;
+    //         }
+
+    //         // creating encrypted password
+    //         $input['password'] = Hash::make($input['password']);
+
+    //         // Find role
+    //         $roleFind = Role::where('name',$input['role'])->firstOrFail();
+
+    //         $input['role'] = $roleFind->id;
+
+    //         // store new entity
+    //         $data = User::create($input);
+
+    //         // update user profile picture
+    //         $data_user = User::where('id',$data->id)->first();
+    //         $data_user->profile_pic = $new_name;
+    //         $data_user->save();
+
+    //         // create team member
+    //         $data_member = TeamMember::create($input);
+
+    //         // assign role 
+    //         $data->assignRole($request->input('role'));
+
+    //         return response()->json(['success'=>$request['name']. ' added successfully.']);
+    //     } catch (\Exception $e) {
+    //         // Handle any exceptions here
+    //         return response()->json(['error' => 'An error occurred while processing your request.'], 500);
+    //     }
+    // }
+
+    public function reset_pass_view()
+    {
+        return view('auth.reset');
+    }
+
+    public function confirm_pin()
+    {
+        return view('auth.confirm_pin');
+    }
+
+    public function new_pass()
+    {
+        return view('auth.new_pass');
+    }
+
+    public function detail_new_pass(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|min:8',
+            'confirm_password' => 'required|same:password',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('new_pass')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $user = User::where('email',$request->email)->first();
+        if (!$user) {
+            return redirect()->route('new_pass')->with(['error_message'=>"No user with this email could be found"], 500);
+        }
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return redirect()->route('login')->with(['success_message'=>"Your password has been reset, please login to confirm your account"]);
+    }
+
+    public function confirm_code(Request $request)
+    {
+        $check_user = User::where('pin_code',$request->pin_code)->where('email',$request->email)->first();
+        if (!$check_user) {
+            return redirect()->route('confirm_pin')->with(['error_message'=>" Incorrect pin, the pic code does not match"], 500);
+        }
+        $check_user->pin_code = null;
+        $check_user->save();
+        return redirect()->route('new_pass');
+    }
+
+    public function reset_pass(Request $request)
+    {
+        $pin_code = rand(11111,99999);
+        $to_email = $request->email;
+
+        $check_user = User::where('email',$request->email)->first();
+        if (!$check_user) {
+            return redirect()->route('reset_pass')->with(['error_message'=>"No user with this email could be found ".$to_email], 500);
+        }
+
+        try {
+            if (!filter_var($to_email, FILTER_VALIDATE_EMAIL)) {
+                throw new Exception("$to_email is not a valid email");
+            }
+
+            $check_user->pin_code = $pin_code;
+            $check_user->save();
+
+            $check_mail = Mail::send('mails.reset', ['email' => $to_email, 'pin_code' => $pin_code], function ($message) use ($to_email) {
+                $message->from("contact@streamdesignstudio.com", 'PMS Stream Design Studio');
+                $message->to($to_email, "test-name")->subject('Password reset request for PMS - Stream Design Studio');
+            });
+        } catch (Exception $e) {
+            // Log the exception
+            \Log::error('Email sending failed: ' . $e->getMessage());
+
+            // Return a JSON response with error message
+            return redirect()->route('reset_pass')->with(['error_message'=>"Failed to send email ".$to_email], 500);
+        }
+        Session::put('confirmation_email', $to_email);
+        return redirect()->route('confirm_pin')->with(['success_message'=>"Your 5 digits code successfully sent to you email ".$to_email]);
+    }
+
+    public function invite_member(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|unique:users,email',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()->first()], 422);
+            }
+
+            $to_email = $request->email;
+            $short_message = $request->short_message;
+            $role = $request->role;
+
+            $user = User::create(
+                [
+                    'email' => $to_email,
+                    'invited_by' => Auth::id(),
+                    'active' => 0,
+                ]
+            );
+
+            $user_id = $user->id;
+
+            Mail::send('mails.index', compact('short_message', 'to_email', 'role', 'user_id'), function ($message) use ($to_email) {
+                $message->from("contact@streamdesignstudio.com", 'PMS Stream Design Studio');
+                $message->to($to_email)->subject('Invitation to register at PMS - Stream Design Studio');
+            });
+
+            return response()->json(['success' => 'Email sent to ' . $to_email]);
+        } catch (Exception $e) {
+            // Log the exception
+            \Log::error('Email sending failed: ' . $e->getMessage());
+
+            // Return a JSON response with error message
+            return response()->json(['error' => 'Failed to send email: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function show_invited_details($email, $id, $role)
+    {
+        $data = User::where('id', $id)->orWhere('email', $email)->firstOrFail();
+        Session::put('user_register_email', $email);
+        Session::put('user_register_role', $role);
+        Session::put('user_register_id', $id);
+        return redirect()->route('register');
+    }
+
+
+    public function mailshow(){
+        return view('mails.index');
     }
 
     public function show($id)
@@ -109,6 +269,52 @@ class UserController extends Controller
       
         return view('users.show',compact('data'));
     }
+
+    public function show_user($id)
+    {
+        $user = User::where('id',$id)->firstOrFail();
+        $roles = Role::where('id','!=',1)->pluck('name','id')->all();
+        $member_roles   = Role::where('id','!=',1)->where('name','!=','Client')->pluck('name','name')->all();
+        // Check if the user is not a client and if they exist in the team_members table
+        $teamMemberExists = DB::table('team_members')->where('name', $user->name)->exists();
+
+        // Check if the user is not a client
+        if (($user->roles[0]->id != 1) && (strtolower($user->roles[0]->name) != 'client' && $teamMemberExists)) {
+            // Join the users table with the team_members table
+            $user = $user->join('team_members', 'users.name', '=', 'team_members.name')
+                        ->where('users.name', '=', $user->name)
+                        ->select(
+                             'users.id', 
+                             'users.name', 
+                             'users.email', 
+                             'users.email_verified_at', 
+                             'users.password', 
+                             'users.contact_no', 
+                             'users.description', 
+                             'users.session_status', 
+                             'users.invited_by', 
+                             'users.profile_pic', 
+                             'users.active', 
+                             'users.remember_token', 
+                             'users.created_by', 
+                             'users.updated_by', 
+                             'users.deleted_at', 
+                             'users.created_at', 
+                             'users.updated_at',
+                             'team_members.role',
+                             'team_members.member_img',
+                             'team_members.joined_at',
+                             'team_members.responsibility_level',
+                             'team_members.position',
+                             'team_members.salary'
+                         )
+                         ->firstOrFail();
+        }
+
+        return view('users.show', compact('user', 'roles', 'member_roles'));
+    }
+
+
 
     public function profileedit($id)
     {
@@ -207,24 +413,24 @@ class UserController extends Controller
     }
 
 
-    public function destroy(Request $request)
-    { 
+    public function destroy(Request $request, User $user)
+    {
 
-        if($request->ids == 1){
-            return response()->json(['error'=> 'This is Super-Admin and cannot be deleted']);
+        if($user->id == 1){
+            return redirect()->back()->with(['error'=>'This is Super-Admin and cannot be deleted']);
         }
-        $ids        = $request->ids;
+        $ids        = $user->id;
         $checkId    = Auth::user()->id;
 
         if($checkId == $ids){
-            return response()->json(['error'=> 'This is logged in user, cannot be deleted']);
+            return redirect()->back()->with(['error'=>'This is logged in user, cannot be deleted']);
         }else{
             $user = User::find($ids);
-             if($user['image']!=""){
-                unlink(public_path('uploads/users/'.$user['image']));
+             if($user['profile_pic']!=""){
+                unlink(public_path('uploads/users/'.$user['profile_pic']));
             }
-            $data = User::whereIn('id',explode(",",$ids))->delete();
-            return response()->json(['success'=>$data." User deleted successfully."]);
+            $data = $user->delete();
+            return redirect()->route('users.index')->with(['success_message'=>"User deleted successfully."]);
         }
     }
 }

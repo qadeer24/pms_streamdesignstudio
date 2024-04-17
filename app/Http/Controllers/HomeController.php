@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use App\Models\FrameWork;
+use App\Models\Category;
+use App\Models\User;
+use App\Models\Project;
+use Carbon\Carbon;
+use Spatie\Permission\Models\Role;
 use DB;
 class HomeController extends Controller
 {
@@ -19,31 +24,18 @@ class HomeController extends Controller
 
     public function index()
     {
-        $date               = date("Y-m-d");
-        $entity             = "daily_report";
-        $rec['oSell']       = 0;
-        $rec['cSell']       = 0;
-        $rec['oPurchase']       = 0;
-        $rec['cPurchase']       = 0;
+        // Restriction to get client as user
+        $users = User::whereHas(
+                    'roles', function($q){
+                        $q->where('name', '!=', 'client');
+                    }
+                )->where('id','!=',1)->get();
+        
+        $categories = Category::all();
+        $framework = FrameWork::all();
+        $project_price = Project::whereMonth('created_at', Carbon::now()->month)->sum('project_price');
+        $projects = Project::where('project_status',1)->count();
+        return view('home',compact('categories','framework','projects','project_price','users'));
 
-        // $rec['oSell']       = DB::table('customer_has_transactions')
-        //                         ->whereDate('customer_has_transactions.created_at','<', $date)
-        //                         ->sum('debit');
-
-        // $rec['cSell']       = DB::table('customer_has_transactions')
-        //                         ->whereDate('customer_has_transactions.created_at', $date)
-        //                         ->sum('debit');
-
-        // $rec['oPurchase']   = DB::table('company_has_transactions')
-        //                         ->whereDate('company_has_transactions.created_at','<', $date)
-        //                         ->sum('debit');
-
-        // $rec['cPurchase']   = DB::table('company_has_transactions')
-        //                         ->whereDate('company_has_transactions.created_at', $date)
-        //                         ->sum('debit');
-
-        return view('home',compact('rec'));
-
-        // return view('home');
     }
 }

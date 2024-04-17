@@ -23,7 +23,16 @@ class RoleController extends Controller
 
     public function index(Request $request)
     {
-        return view('roles.index');
+        $permissions     = Permission::get();
+        $roles = DB::table('roles')
+            ->leftJoin('model_has_roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->leftJoin('role_has_permissions', 'roles.id', '=', 'role_has_permissions.role_id')
+            ->select('roles.id', 'roles.name', DB::raw('count(distinct model_has_roles.model_id) as user_count'))
+            ->selectRaw('GROUP_CONCAT(role_has_permissions.permission_id) as permission_ids')
+            ->groupBy('roles.id', 'roles.name')
+            ->get();
+
+        return view('roles.index',compact('permissions','roles'));
     }
 
     public function list()
@@ -92,9 +101,9 @@ class RoleController extends Controller
     }
 
 
-    public function update(RoleRequest $request, $id)
+    public function update(RoleRequest $request)
     {
-        if($id == 1){
+        if($request->role_id == 1){
             return response()->json(['error'=> 'This is Super-Admin role and cannot be updated']);
         }
 
@@ -102,7 +111,7 @@ class RoleController extends Controller
         $validated  = $request->validated();
 
         // get all request
-        $role        = Role::findOrFail($id);
+        $role        = Role::findOrFail($request->role_id);
         $role->name  = $request->input('name');
         $role->save();
 
@@ -110,18 +119,17 @@ class RoleController extends Controller
         return response()->json(['success'=>$request['name']. ' updated successfully.']);
     }
     
-    public function destroy(Request $request)
+    public function destroy($id)
     {
-        if($request->ids == 1){
+        if($id == 1){
             return response()->json(['error'=> 'This is Super-Admin role and cannot be deleted']);
         }
 
-        $ids = $request->ids;
-        if($ids==1){
+        if($id==1){
             return response()->json(['error'=> 'This is logged in user role, cannot be deleted']);
         }else{
-            $data = Role::whereIn('id',explode(",",$ids))->delete();
-            return response()->json(['success'=>$data." Roles deleted successfully."]);
+            $data = Role::where('id',$id)->delete();
+            return redirect()->route('roles.index')->with('success_message', 'Role deleted successfully');
         }
     }
 }

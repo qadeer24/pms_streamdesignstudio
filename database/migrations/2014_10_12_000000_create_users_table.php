@@ -21,7 +21,10 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->string('contact_no',15)->unique()->nullable();
             $table->text('description')->nullable();
+            $table->boolean('session_status')->default(0);
+            $table->integer('invited_by')->default(0);
             $table->string('profile_pic')->nullable();
+            $table->string('pin_code')->nullable();
             $table->boolean('active')->default(1);
             $table->rememberToken();
             $table->unsignedInteger('created_by')->nullable();

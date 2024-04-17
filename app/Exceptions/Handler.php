@@ -32,30 +32,25 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-       
-
-        // return $request->expectsJson()
-        //     ? response()->json(['error'=> $exception->getMessage()])
-        //     : response()->json(['error'=> $exception->getMessage()]);
-
-
         if ($exception instanceof \Spatie\Permission\Exceptions\UnauthorizedException) {
-            if($request->ajax()){
-                return response()->json(['error'=> "$exception->getMessage()"]);
-            }else{
-                return redirect()->back()->with('permission',$exception->getMessage());
+            if ($request->ajax()) {
+                return response()->json(['error' => 'Access Denied: You do not have the necessary permissions to perform this action.']);
+            } else {
+                return redirect()->back()->with('permission', 'Access Denied: You do not have the necessary permissions to view this page.');
             }
         }
 
         if ($this->isHttpException($exception)) {
-            if($request->ajax()){
-                return response()->json(['error'=> "Invalid route!!!"]);
-            }else{
-                return redirect()->back()->with('permission',"Invalid route!!!");
+            if ($request->ajax()) {
+                return response()->json(['error' => 'Invalid route!!!']);
+            } else {
+                return redirect()->back()->with('permission', 'Invalid route!!!');
             }
         }
+
         return parent::render($request, $exception);
     }
+
     public function register()
     {
         //

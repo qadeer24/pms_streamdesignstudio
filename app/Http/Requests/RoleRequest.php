@@ -21,7 +21,7 @@ class RoleRequest extends FormRequest
             ];
           }else{
             return [
-                'name'          => ['min:3','required', Rule::unique('roles')->ignore($this->role)],
+                'name'          => ['min:3','required', Rule::unique('roles')->ignore($this->role_id)],
                 'permission'    => 'required',
             ];
         }

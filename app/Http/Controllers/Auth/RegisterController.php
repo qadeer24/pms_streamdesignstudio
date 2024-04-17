@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Validation\Rule;
 use App\Providers\RouteServiceProvider;
 use App\Models\User;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use DB;
 
 class RegisterController extends Controller
 {
@@ -49,11 +51,19 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-        return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+        if ($data['roles']) {
+            return Validator::make($data, [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($data['user_id'])],
+                'password' => ['required', 'string', 'min:8', 'confirmed', 'unique:users,email'],
+            ]);
+        }else{
+            return Validator::make($data, [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255'],
+                'password' => ['required', 'string', 'min:8', 'confirmed'],
+            ]);
+        }
     }
 
     /**
@@ -64,6 +74,16 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        if ($data['roles']) {
+            $user = User::where('id',$data['user_id'])->where('email',$data['email'])->firstOrFail();
+            $data['password'] = Hash::make($data['password']);
+            $data['active'] = 1;
+            $user->update($data);
+            DB::table('model_has_roles')->where('model_id', $user->id)->delete();
+            $user->assignRole($data['roles']);
+            return $user; 
+        }
+
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],

@@ -1,24 +1,14 @@
 <?php
 
 	use Illuminate\Support\Facades\Route;
-	use App\Http\Controllers\AreaController;
 	use App\Http\Controllers\UserController;
 	use App\Http\Controllers\RoleController;
-	use App\Http\Controllers\CityController;
-	use App\Http\Controllers\StatusController;
-	use App\Http\Controllers\ReasonController;
-	use App\Http\Controllers\PeopleController;
-	use App\Http\Controllers\RatingController;
-	use App\Http\Controllers\CaptainController;
-	use App\Http\Controllers\ProvinceController;
-	use App\Http\Controllers\ComplaintController;
-	use App\Http\Controllers\PassengerController;
+	use App\Http\Controllers\CategoryController;
+	use App\Http\Controllers\FrameWorkController;
+	use App\Http\Controllers\CommentController;
+	use App\Http\Controllers\ProjectController;
+	use App\Http\Controllers\TaskController;
 	use App\Http\Controllers\TwilioSMSController;
-	use App\Http\Controllers\PermissionController;
-	use App\Http\Controllers\Complaint_tagController;
-	use App\Http\Controllers\Payment_methodController;
-	use App\Http\Controllers\ChatController;
-	
 	Auth::routes();
 
 	Route::get('/', function () {
@@ -29,7 +19,20 @@
 		}
 	});
 
-	// Route::get('send_otp/{contact_no}/{code}', [TwilioSMSController::class, 'index']);
+	Route::get('reset_pass',[UserController::class, 'reset_pass_view'])->name('reset_pass');
+
+	Route::get('register/{email}/{id}/{role}',[UserController::class, 'show_invited_details'])->name('show_invited_details');
+	
+	Route::get('new_pass',[UserController::class, 'new_pass'])->name('new_pass');
+
+	Route::get('confirm_pin',[UserController::class, 'confirm_pin'])->name('confirm_pin');
+
+	Route::post('reset_pass_details',[UserController::class, 'reset_pass'])->name('reset_pass_details');
+	
+	Route::post('detail_new_pass',[UserController::class, 'detail_new_pass'])->name('detail_new_pass');
+
+	Route::post('confirm_code',[UserController::class, 'confirm_code'])->name('confirm_code');
+
 
 	Route::get('/send_sms/{contact_no}',[App\Http\Controllers\NotificationController::class, 'send_sms']);
 
@@ -37,102 +40,43 @@
 		Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 
-		Route::resource('/peoples',PeopleController::class);
-		Route::get('/lst_people', [PeopleController::class, 'list']);
-		Route::delete('/del_people', [PeopleController::class, 'destroy']);
-
-		Route::group(['prefix' => 'peoples'], function () {
-			Route::get('/shdls/{id}', [PeopleController::class, 'schedules']);
-			Route::get('/shdls_lst/{id}', [PeopleController::class, 'schedules_lst']);
-			Route::get('/shdls/shdl/{id}', [PeopleController::class, 'schedule_show']);
-
-			Route::get('/cmplnts/{id}', [PeopleController::class, 'complaints']);
-			Route::get('/cmplnts_lst/{id}', [PeopleController::class, 'complaints_lst']);
-
-			Route::get('/rtngs/{id}', [PeopleController::class, 'ratings']);
-			Route::get('/rtngs_lst/{id}', [PeopleController::class, 'ratings_lst']);
-
-			Route::get('/bkngs/{id}', [PeopleController::class, 'bookings']);
-			Route::get('/bkngs_lst/{id}', [PeopleController::class, 'bookings_lst']);
-		});
-
-		
-	// BEGIN::Rating
-		Route::resource('/chats', ChatController::class);
-		Route::get('/lst_chat', [ChatController::class, 'list']);
-		Route::delete('/del_chat', [ChatController::class, 'destroy']);
-	// BEGIN::Rating
-
-	
-	// BEGIN::Rating
-		Route::resource('/ratings', RatingController::class);
-		Route::get('/lst_rating', [RatingController::class, 'list']);
-		Route::delete('/del_rating', [RatingController::class, 'destroy']);
-	// BEGIN::Rating
+		Route::resource('/projects',ProjectController::class);
+		Route::post('/projects/update/{id}', [ProjectController::class, 'update'])->name('projects.update');
+		Route::post('/projects/search/{keyword}', [ProjectController::class, 'search_user'])->name('projects.search_user');
+		Route::delete('/del_people', [ProjectController::class, 'destroy']);
 
 
-	// BEGIN::Province
-		Route::resource('/provinces', ProvinceController::class);
-		Route::get('/lst_province', [ProvinceController::class, 'list']);
-		Route::delete('/del_province', [ProvinceController::class, 'destroy']);
-	// BEGIN::Province
+		Route::get('/tasks/{id}',[TaskController::class, 'index'])->name('tasks');
+		Route::post('/task/update/custom', [TaskController::class,'update'])->name('tasks.update.custom');
+		Route::resource('/tasks',TaskController::class);
+		Route::resource('/categories',CategoryController::class);
+		Route::post('/categories/update_custom', [CategoryController::class, 'update'])->name('categories.update_custom');
 
-
-	// BEGIN::city
-		Route::resource('/cities', CityController::class);
-		Route::get('/lst_city', [CityController::class, 'list']);
-		Route::delete('/del_city', [CityController::class, 'destroy']);
-	// END::city
-
-	// BEGIN::area
-		Route::resource('/areas', AreaController::class);
-		Route::get('/lst_area', [AreaController::class, 'list']);
-		Route::delete('/del_area', [AreaController::class, 'destroy']);
-	// END::area
-
-	// BEGIN::reasons
-		Route::resource('/reasons', ReasonController::class);
-		Route::get('/lst_reason', [ReasonController::class, 'list']);
-		Route::delete('/del_reason', [ReasonController::class, 'destroy']);
-	// END::reasons
-
-	// BEGIN::statuses
-		Route::resource('/statuses', StatusController::class);
-		Route::get('/lst_status', [StatusController::class, 'list']);
-		Route::delete('/del_status', [StatusController::class, 'destroy']);
-	// BEGIN::statuses
-
-	// BEGIN::payment_methods
-		Route::resource('/payment_methods', Payment_methodController::class);
-		Route::get('/lst_payment_method', [Payment_methodController::class, 'list']);
-		Route::delete('/del_payment_method', [Payment_methodController::class, 'destroy']);
-	// BEGIN::payment_methods
-
-	
-	// BEGIN::complaint_tags
-		Route::resource('/complaint_tags', Complaint_tagController::class);
-		Route::get('/lst_complaint_tags', [Complaint_tagController::class, 'list']);
-		Route::delete('/del_complaint_tag', [Complaint_tagController::class, 'destroy']);
-	// BEGIN::complaint_tags
 
 	// BEGIN::users
 		Route::resource('/users', UserController::class);
+		Route::get('/mail', [UserController::class, 'mailshow']);
+		Route::post('/users/{id}/update', [UserController::class, 'update'])->name('users.custom_update');
 		Route::get('/lst_user', [UserController::class, 'list']);
 		Route::delete('/del_user', [UserController::class, 'destroy']);
+		Route::post('/invite_member', [UserController::class, 'invite_member'])->name('users.invite_member');
+		Route::get('/user/{user}', [UserController::class, 'show_user'])->name('user.view');
 	// BEGIN::users
 
 	// BEGIN::roles
 		Route::resource('/roles', RoleController::class);
+		
+		Route::resource('/frameworks', FrameWorkController::class);
+		Route::post('/frameworks/update_custom', [FrameworkController::class, 'update'])->name('frameworks.update_custom');
+		
+
+		Route::resource('/comments', CommentController::class);
+		Route::get('/fetch-new-comments/{timestamp}', [CommentController::class, 'fetchNewComments'])->name('fetchNewComments');
+
+		Route::post('/roles/update/custom', [RoleController::class,'update'])->name('roles.update.custom');
 		Route::get('/lst_role', [RoleController::class, 'list']);
 		Route::delete('/del_role', [RoleController::class, 'destroy']);
 	// BEGIN::roles
-
-	// BEGIN::permissions
-		// Route::resource('/permissions', PermissionController::class);
-		// Route::get('/lst_permission', [PermissionController::class, 'list']);
-		// Route::delete('/del_permission', [PermissionController::class, 'destroy']);
-	// BEGIN::permissions
-
 
 
 });
